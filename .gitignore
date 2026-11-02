@@ -1,0 +1,15 @@
+# Xcode & Swift Package Manager
+.DS_Store
+.build/
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad
+
+# Local Configuration & Logs
+*.log
+/tmp/
+
+# App Bundles
+MacGuard.app/
+*.icns.tmp

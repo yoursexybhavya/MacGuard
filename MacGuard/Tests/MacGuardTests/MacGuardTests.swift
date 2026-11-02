@@ -1,0 +1,210 @@
+import Foundation
+import Testing
+@testable import MacGuard
+
+@Suite("Security & Boundary Guard Tests")
+struct SecurityGuardTests {
+    let guardInstance = SecurityGuard.shared
+
+    @Test("Blocks protected system root paths")
+    func testProtectedSystemPaths() throws {
+        #expect(throws: SecurityGuard.SecurityError.self) {
+            _ = try guardInstance.validatePath("/System", forModification: true)
+        }
+        #expect(throws: SecurityGuard.SecurityError.self) {
+            _ = try guardInstance.validatePath("/System/Library", forModification: true)
+        }
+        #expect(throws: SecurityGuard.SecurityError.self) {
+            _ = try guardInstance.validatePath("/Library", forModification: true)
+        }
+        #expect(throws: SecurityGuard.SecurityError.self) {
+            _ = try guardInstance.validatePath("/usr/bin", forModification: true)
+        }
+        #expect(throws: SecurityGuard.SecurityError.self) {
+            _ = try guardInstance.validatePath("/bin/zsh", forModification: true)
+        }
+        #expect(throws: SecurityGuard.SecurityError.self) {
+            _ = try guardInstance.validatePath("/private/etc/hosts", forModification: true)
+        }
+    }
+
+    @Test("Blocks path traversal exploits")
+    func testPathTraversalAttacks() throws {
+        let maliciousPaths = [
+            "../../etc/passwd",
+            "/Users/krishnajangid/Downloads/../../System",
+            "../Documents"
+        ]
+
+        for path in maliciousPaths {
+            #expect(throws: SecurityGuard.SecurityError.self) {
+                _ = try guardInstance.validatePath(path, forModification: false)
+            }
+        }
+    }
+
+    @Test("Blocks modification of sensitive user directories")
+    func testSensitiveUserDirectories() throws {
+        let sensitive = [
+            "/Users/krishnajangid/.ssh/id_ed25519",
+            "/Users/krishnajangid/.gnupg/secring.gpg"
+        ]
+
+        for path in sensitive {
+            #expect(throws: SecurityGuard.SecurityError.self) {
+                _ = try guardInstance.validatePath(path, forModification: true)
+            }
+        }
+    }
+}
+
+@Suite("System Scanner & Duplicate Detection Tests")
+struct SystemScannerTests {
+    let scanner = SystemScanner.shared
+
+    @Test("Categorizes files accurately according to extension")
+    func testFileCategorization() {
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/app.dmg")) == .installers)
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/bundle.pkg")) == .installers)
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/archive.zip")) == .archives)
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/data.tar.gz")) == .archives)
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/thesis.pdf")) == .documents)
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/photo.heic")) == .images)
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/script.swift")) == .code)
+        #expect(scanner.categorize(url: URL(fileURLWithPath: "/tmp/system.log")) == .caches)
+    }
+
+    @Test("Detects identical duplicate files using cryptographic SHA-256")
+    func testDuplicateDetection() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let contentA = "MacGuard Test File Content - Identical Duplicate Alpha".data(using: .utf8)!
+        let contentB = "MacGuard Different Content - Beta Unique".data(using: .utf8)!
+
+        let file1 = tempDir.appendingPathComponent("doc1.txt")
+        let file2 = tempDir.appendingPathComponent("doc2.txt")
+        let file3 = tempDir.appendingPathComponent("unique.txt")
+
+        try contentA.write(to: file1)
+        try contentA.write(to: file2)
+        try contentB.write(to: file3)
+
+        let duplicates = try scanner.findDuplicates(in: tempDir, minFileSize: 1)
+        #expect(duplicates.count == 1)
+        #expect(duplicates.first?.files.count == 2)
+        #expect(duplicates.first?.totalWastedSpace == Int64(contentA.count))
+    }
+}
+
+@Suite("File Organizer & Collision Prevention Tests")
+struct FileOrganizerTests {
+    let organizer = FileOrganizer.shared
+
+    @Test("Proposes clean categorization without overwriting")
+    func testOrganizationPlanning() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let sampleDoc = tempDir.appendingPathComponent("notes.pdf")
+        let sampleImg = tempDir.appendingPathComponent("chart.png")
+        let sampleInstaller = tempDir.appendingPathComponent("setup.dmg")
+
+        try "Dummy Doc".data(using: .utf8)?.write(to: sampleDoc)
+        try "Dummy Img".data(using: .utf8)?.write(to: sampleImg)
+        try "Dummy Installer".data(using: .utf8)?.write(to: sampleInstaller)
+
+        let proposals = try organizer.planOrganization(for: tempDir)
+        #expect(proposals.count == 3)
+
+        let docProposal = proposals.first(where: { $0.fileName == "notes.pdf" })
+        #expect(docProposal != nil)
+        #expect(docProposal?.proposedDestinationURL.path.contains("Documents") == true)
+
+        let installerProposal = proposals.first(where: { $0.fileName == "setup.dmg" })
+        #expect(installerProposal != nil)
+        #expect(installerProposal?.proposedDestinationURL.path.contains("Installers") == true)
+    }
+}
+
+@Suite("Rollback Ledger & Reversibility Tests")
+struct RollbackLedgerTests {
+    let ledger = RollbackLedger.shared
+
+    @Test("Records and executes reversible file rollback")
+    func testRollbackOperation() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let source = tempDir.appendingPathComponent("original.txt")
+        let destination = tempDir.appendingPathComponent("subfolder/moved.txt")
+        try "Reversibility Test Data".data(using: .utf8)?.write(to: source)
+
+        let fileManager = FileManager.default
+        let subfolder = destination.deletingLastPathComponent()
+        try fileManager.createDirectory(at: subfolder, withIntermediateDirectories: true)
+        try fileManager.moveItem(at: source, to: destination)
+
+        let recordId = UUID()
+        let record = OperationRecord(
+            id: recordId,
+            actionType: .moveFile,
+            sourcePath: source.path,
+            destinationPath: destination.path,
+            fileSize: 22,
+            reason: "Unit test rollback"
+        )
+        ledger.recordOperation(record)
+
+        #expect(!fileManager.fileExists(atPath: source.path))
+        #expect(fileManager.fileExists(atPath: destination.path))
+
+        // Trigger rollback
+        try ledger.rollback(operationId: recordId)
+
+        #expect(fileManager.fileExists(atPath: source.path))
+        #expect(!fileManager.fileExists(atPath: destination.path))
+    }
+}
+
+@Suite("AI Maintenance Intelligence & Boundaries Tests")
+struct AIEngineTests {
+    let aiEngine = MacGuardAIEngine.shared
+
+    @Test("Specialized MacGuard boundaries politely decline non-maintenance queries")
+    func testBoundaryRefusal() async {
+        let result = await aiEngine.processUserQuery("Write me a poem about golden retrievers")
+        switch result {
+        case .messageOnly(let text):
+            #expect(!text.isEmpty)
+        default:
+            Issue.record("Expected messageOnly refusal for non-maintenance query")
+        }
+    }
+
+    @Test("Correctly routes maintenance query to organization engine")
+    func testOrganizeRouting() async {
+        let result = await aiEngine.processUserQuery("Organize my Downloads folder")
+        switch result {
+        case .organizationPlan(let message, _):
+            #expect(!message.isEmpty)
+        default:
+            Issue.record("Expected organizationPlan for organization query")
+        }
+    }
+
+    @Test("Correctly routes cleanup query to cleanup engine")
+    func testCleanupRouting() async {
+        let result = await aiEngine.processUserQuery("Clean up temporary caches and old logs")
+        switch result {
+        case .cleanupPlan(let message, _):
+            #expect(!message.isEmpty)
+        default:
+            Issue.record("Expected cleanupPlan for cache cleaning query")
+        }
+    }
+}
+
