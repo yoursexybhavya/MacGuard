@@ -1,0 +1,1344 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+		518DA81DB9B99529C0C0AEBE /* group:main */ = {
+			isa = PBXGroup;
+			children = (
+				1507F349832A04790D3C1273,
+				A0937472EE5878FA82CB0F7E,
+				547D009064F7C3F13BEF3460,
+			);
+			sourceTree = "<group>";
+		};
+		547D009064F7C3F13BEF3460 /* group:products */ = {
+			isa = PBXGroup;
+			children = (
+				75D454AFD31C28B62F6811E7,
+				546F8112B3BB06C9E96053DD,
+				FADAB4A7EE7DD7E356DCDE97,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1507F349832A04790D3C1273 /* group:sources */ = {
+			isa = PBXGroup;
+			children = (
+				E838FC651F87C008A8DF7605,
+				A38DF463C78C0F1C90A0F8C3,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		A0937472EE5878FA82CB0F7E /* group:tests */ = {
+			isa = PBXGroup;
+			children = (
+				B549E2B88496C9540D872778,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		E838FC651F87C008A8DF7605 /* group:Sources/MacGuardKit */ = {
+			isa = PBXGroup;
+			children = (
+				D87F91FF337775C4E29A369A,
+				498822068EEF99918E6D651A,
+				B8E9B1988BF91DAA495E0CEB,
+				E1C7B31EB3A0FFAC31B66EF5,
+				69E14B8C9B2A43919D25FF10,
+			);
+			path = MacGuardKit;
+			sourceTree = "<group>";
+		};
+		0BEA5ED6C28ED41464AD4217 /* file:Sources/MacGuardKit/Models/AppSection.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = AppSection.swift;
+			path = AppSection.swift;
+			sourceTree = "<group>";
+		};
+		F3B60A06363AFEB591035E7C /* file:Sources/MacGuardKit/Models/Organization.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Organization.swift;
+			path = Organization.swift;
+			sourceTree = "<group>";
+		};
+		1F844518F0CBBB0BE4347777 /* file:Sources/MacGuardKit/Models/ScanCategory.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ScanCategory.swift;
+			path = ScanCategory.swift;
+			sourceTree = "<group>";
+		};
+		8834C7769092FFD05DF63D43 /* file:Sources/MacGuardKit/Models/ScanResult.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ScanResult.swift;
+			path = ScanResult.swift;
+			sourceTree = "<group>";
+		};
+		D87F91FF337775C4E29A369A /* group:Sources/MacGuardKit/Models */ = {
+			isa = PBXGroup;
+			children = (
+				0BEA5ED6C28ED41464AD4217,
+				F3B60A06363AFEB591035E7C,
+				1F844518F0CBBB0BE4347777,
+				8834C7769092FFD05DF63D43,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		511F7DA6A84213C9E87B2F9B /* file:Sources/MacGuardKit/Engine/Cleaner.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Cleaner.swift;
+			path = Cleaner.swift;
+			sourceTree = "<group>";
+		};
+		9500DDB19EA0256720F988F8 /* file:Sources/MacGuardKit/Engine/DuplicateFinder.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = DuplicateFinder.swift;
+			path = DuplicateFinder.swift;
+			sourceTree = "<group>";
+		};
+		78A413A8B25131F82637D9BC /* file:Sources/MacGuardKit/Engine/FileScanner.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = FileScanner.swift;
+			path = FileScanner.swift;
+			sourceTree = "<group>";
+		};
+		B7859715CA659A76F2FDA4F5 /* file:Sources/MacGuardKit/Engine/Organizer.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Organizer.swift;
+			path = Organizer.swift;
+			sourceTree = "<group>";
+		};
+		BE5E1DD593F4BA1E0E1EF153 /* file:Sources/MacGuardKit/Engine/StorageAnalyzer.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = StorageAnalyzer.swift;
+			path = StorageAnalyzer.swift;
+			sourceTree = "<group>";
+		};
+		498822068EEF99918E6D651A /* group:Sources/MacGuardKit/Engine */ = {
+			isa = PBXGroup;
+			children = (
+				511F7DA6A84213C9E87B2F9B,
+				9500DDB19EA0256720F988F8,
+				78A413A8B25131F82637D9BC,
+				B7859715CA659A76F2FDA4F5,
+				BE5E1DD593F4BA1E0E1EF153,
+			);
+			path = Engine;
+			sourceTree = "<group>";
+		};
+		70EDB5C2C65DC1F5AD262C09 /* file:Sources/MacGuardKit/Persistence/Stores.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Stores.swift;
+			path = Stores.swift;
+			sourceTree = "<group>";
+		};
+		B8E9B1988BF91DAA495E0CEB /* group:Sources/MacGuardKit/Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				70EDB5C2C65DC1F5AD262C09,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		2A77502A8BFD49F7CF7751D4 /* file:Sources/MacGuardKit/Support/ByteSize.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ByteSize.swift;
+			path = ByteSize.swift;
+			sourceTree = "<group>";
+		};
+		70888FF103B5607D8E09884A /* file:Sources/MacGuardKit/Support/FileSystem.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = FileSystem.swift;
+			path = FileSystem.swift;
+			sourceTree = "<group>";
+		};
+		A3DB4F0CB96C53A7E5ED921A /* file:Sources/MacGuardKit/Support/PathSafety.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PathSafety.swift;
+			path = PathSafety.swift;
+			sourceTree = "<group>";
+		};
+		2D50B0C73F5C1091C6E9CBA5 /* file:Sources/MacGuardKit/Support/SystemServices.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SystemServices.swift;
+			path = SystemServices.swift;
+			sourceTree = "<group>";
+		};
+		E1C7B31EB3A0FFAC31B66EF5 /* group:Sources/MacGuardKit/Support */ = {
+			isa = PBXGroup;
+			children = (
+				2A77502A8BFD49F7CF7751D4,
+				70888FF103B5607D8E09884A,
+				A3DB4F0CB96C53A7E5ED921A,
+				2D50B0C73F5C1091C6E9CBA5,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		29001A0FDB7363BB6E396F8F /* file:Sources/MacGuardKit/App/AppState.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = AppState.swift;
+			path = AppState.swift;
+			sourceTree = "<group>";
+		};
+		69E14B8C9B2A43919D25FF10 /* group:Sources/MacGuardKit/App */ = {
+			isa = PBXGroup;
+			children = (
+				29001A0FDB7363BB6E396F8F,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A38DF463C78C0F1C90A0F8C3 /* group:Sources/MacGuard */ = {
+			isa = PBXGroup;
+			children = (
+				20B9AA6C5B6025B0569841DB,
+				936D08B29A1FE8D97182EFC4,
+				F086748EFFA8B2540E403F83,
+				A06F86CA0D072864A74A86A2,
+				AC194DBCA91551619B3713B7,
+			);
+			path = MacGuard;
+			sourceTree = "<group>";
+		};
+		2293AF494C77A98A922CB738 /* file:Sources/MacGuard/App/MacGuardApp.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = MacGuardApp.swift;
+			path = MacGuardApp.swift;
+			sourceTree = "<group>";
+		};
+		20B9AA6C5B6025B0569841DB /* group:Sources/MacGuard/App */ = {
+			isa = PBXGroup;
+			children = (
+				2293AF494C77A98A922CB738,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		48BEDA77F3A1B6813FC98C8F /* file:Sources/MacGuard/Views/Components.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Components.swift;
+			path = Components.swift;
+			sourceTree = "<group>";
+		};
+		C98668CB82F15BCB0A5649E0 /* file:Sources/MacGuard/Views/DashboardView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = DashboardView.swift;
+			path = DashboardView.swift;
+			sourceTree = "<group>";
+		};
+		62BA48B81F93B5C6CD5E0334 /* file:Sources/MacGuard/Views/DuplicatesView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = DuplicatesView.swift;
+			path = DuplicatesView.swift;
+			sourceTree = "<group>";
+		};
+		CF927F547291FB203D99E8C2 /* file:Sources/MacGuard/Views/HistoryView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = HistoryView.swift;
+			path = HistoryView.swift;
+			sourceTree = "<group>";
+		};
+		763C2583939C49D24E73DF0D /* file:Sources/MacGuard/Views/MenuBarPopover.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = MenuBarPopover.swift;
+			path = MenuBarPopover.swift;
+			sourceTree = "<group>";
+		};
+		AA13E97F97C74E740FFCAA18 /* file:Sources/MacGuard/Views/OnboardingView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = OnboardingView.swift;
+			path = OnboardingView.swift;
+			sourceTree = "<group>";
+		};
+		B9B48F0655629930377DD1AF /* file:Sources/MacGuard/Views/OrganizerView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = OrganizerView.swift;
+			path = OrganizerView.swift;
+			sourceTree = "<group>";
+		};
+		C25E86FD7111D351E9877F91 /* file:Sources/MacGuard/Views/RootView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = RootView.swift;
+			path = RootView.swift;
+			sourceTree = "<group>";
+		};
+		B0508E5CCC37E2BAD43695D2 /* file:Sources/MacGuard/Views/SettingsView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SettingsView.swift;
+			path = SettingsView.swift;
+			sourceTree = "<group>";
+		};
+		D17306EAA0D937D93903232A /* file:Sources/MacGuard/Views/SmartScanView.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SmartScanView.swift;
+			path = SmartScanView.swift;
+			sourceTree = "<group>";
+		};
+		734D3B1F12C7DB87BC879057 /* file:Sources/MacGuard/Views/Styles.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Styles.swift;
+			path = Styles.swift;
+			sourceTree = "<group>";
+		};
+		936D08B29A1FE8D97182EFC4 /* group:Sources/MacGuard/Views */ = {
+			isa = PBXGroup;
+			children = (
+				48BEDA77F3A1B6813FC98C8F,
+				C98668CB82F15BCB0A5649E0,
+				62BA48B81F93B5C6CD5E0334,
+				CF927F547291FB203D99E8C2,
+				763C2583939C49D24E73DF0D,
+				AA13E97F97C74E740FFCAA18,
+				B9B48F0655629930377DD1AF,
+				C25E86FD7111D351E9877F91,
+				B0508E5CCC37E2BAD43695D2,
+				D17306EAA0D937D93903232A,
+				734D3B1F12C7DB87BC879057,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		EDC23EA41740FFE07732549F /* file:Sources/MacGuard/Resources/Assets.xcassets */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = folder.assetcatalog;
+			name = Assets.xcassets;
+			path = Assets.xcassets;
+			sourceTree = "<group>";
+		};
+		F086748EFFA8B2540E403F83 /* group:Sources/MacGuard/Resources */ = {
+			isa = PBXGroup;
+			children = (
+				EDC23EA41740FFE07732549F,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A06F86CA0D072864A74A86A2 /* file:Sources/MacGuard/Info.plist */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.xml;
+			name = Info.plist;
+			path = Info.plist;
+			sourceTree = "<group>";
+		};
+		AC194DBCA91551619B3713B7 /* file:Sources/MacGuard/MacGuard.entitlements */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.entitlements;
+			name = MacGuard.entitlements;
+			path = MacGuard.entitlements;
+			sourceTree = "<group>";
+		};
+		933034C9903990DA82B50D44 /* file:Tests/MacGuardTests/MacGuardTests.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = MacGuardTests.swift;
+			path = MacGuardTests.swift;
+			sourceTree = "<group>";
+		};
+		B549E2B88496C9540D872778 /* group:Tests/MacGuardTests */ = {
+			isa = PBXGroup;
+			children = (
+				933034C9903990DA82B50D44,
+			);
+			path = MacGuardTests;
+			sourceTree = "<group>";
+		};
+		75D454AFD31C28B62F6811E7 /* product:MacGuardKit.framework */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = MacGuardKit.framework;
+			path = MacGuardKit.framework;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		546F8112B3BB06C9E96053DD /* product:MacGuard.app */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.application;
+			name = MacGuard.app;
+			path = MacGuard.app;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		FADAB4A7EE7DD7E356DCDE97 /* product:MacGuardTests.xctest */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.cfbundle;
+			name = MacGuardTests.xctest;
+			path = MacGuardTests.xctest;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		37B122189FAFA0583C54197C /* bf:kit:Sources/MacGuardKit/App/AppState.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 29001A0FDB7363BB6E396F8F;
+		};
+		BEDD64E98596A2BA454813DE /* bf:kit:Sources/MacGuardKit/Engine/Cleaner.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 511F7DA6A84213C9E87B2F9B;
+		};
+		0F7493C50A276B0B9C3ACA35 /* bf:kit:Sources/MacGuardKit/Engine/DuplicateFinder.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 9500DDB19EA0256720F988F8;
+		};
+		407B7FB5F851055980C64BB8 /* bf:kit:Sources/MacGuardKit/Engine/FileScanner.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 78A413A8B25131F82637D9BC;
+		};
+		238577F0B6B10215BA209C8B /* bf:kit:Sources/MacGuardKit/Engine/Organizer.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = B7859715CA659A76F2FDA4F5;
+		};
+		82D4F6975DB264D6DA68DEBE /* bf:kit:Sources/MacGuardKit/Engine/StorageAnalyzer.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = BE5E1DD593F4BA1E0E1EF153;
+		};
+		3C63A77DA6E11FC52C25EEDF /* bf:kit:Sources/MacGuardKit/Models/AppSection.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 0BEA5ED6C28ED41464AD4217;
+		};
+		86900D48179266333620E04D /* bf:kit:Sources/MacGuardKit/Models/Organization.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = F3B60A06363AFEB591035E7C;
+		};
+		E2766A67DDF1E8ADFB2D027F /* bf:kit:Sources/MacGuardKit/Models/ScanCategory.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 1F844518F0CBBB0BE4347777;
+		};
+		CB927F82DA88CD51B9B25497 /* bf:kit:Sources/MacGuardKit/Models/ScanResult.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 8834C7769092FFD05DF63D43;
+		};
+		FC5BF6B71F0C43A49042F0AA /* bf:kit:Sources/MacGuardKit/Persistence/Stores.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 70EDB5C2C65DC1F5AD262C09;
+		};
+		6A3B8AFBFD2355637905B37A /* bf:kit:Sources/MacGuardKit/Support/ByteSize.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 2A77502A8BFD49F7CF7751D4;
+		};
+		54485B860B31E7C70F69B5D6 /* bf:kit:Sources/MacGuardKit/Support/FileSystem.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 70888FF103B5607D8E09884A;
+		};
+		39244CF01060B6213CA5B116 /* bf:kit:Sources/MacGuardKit/Support/PathSafety.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = A3DB4F0CB96C53A7E5ED921A;
+		};
+		7C008AED368BDBE13799AE5E /* bf:kit:Sources/MacGuardKit/Support/SystemServices.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 2D50B0C73F5C1091C6E9CBA5;
+		};
+		5BF9D7108FCF3012F5EC26DC /* bf:app:Sources/MacGuard/App/MacGuardApp.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 2293AF494C77A98A922CB738;
+		};
+		5F9C4BCCC7B19EFB2A1EE72E /* bf:app:Sources/MacGuard/Views/Components.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 48BEDA77F3A1B6813FC98C8F;
+		};
+		C29351AC7AA2BE881B4F0CFF /* bf:app:Sources/MacGuard/Views/DashboardView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = C98668CB82F15BCB0A5649E0;
+		};
+		73C45CEBFF98D8A73DD00096 /* bf:app:Sources/MacGuard/Views/DuplicatesView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 62BA48B81F93B5C6CD5E0334;
+		};
+		FE91A0EDCEBE217907474970 /* bf:app:Sources/MacGuard/Views/HistoryView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = CF927F547291FB203D99E8C2;
+		};
+		C5D46BB438E7EA036F0BE522 /* bf:app:Sources/MacGuard/Views/MenuBarPopover.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 763C2583939C49D24E73DF0D;
+		};
+		B18090C5930ECA3C89F777DA /* bf:app:Sources/MacGuard/Views/OnboardingView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = AA13E97F97C74E740FFCAA18;
+		};
+		DB18E125759197B605F6F45E /* bf:app:Sources/MacGuard/Views/OrganizerView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = B9B48F0655629930377DD1AF;
+		};
+		319108507BE810F2762BE4E6 /* bf:app:Sources/MacGuard/Views/RootView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = C25E86FD7111D351E9877F91;
+		};
+		FB2B1D4C67286B52ACF9F6A3 /* bf:app:Sources/MacGuard/Views/SettingsView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = B0508E5CCC37E2BAD43695D2;
+		};
+		89FD59C932DFCBC5C36B2B4E /* bf:app:Sources/MacGuard/Views/SmartScanView.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = D17306EAA0D937D93903232A;
+		};
+		9BFBD2BB41B1D94A0AB0708F /* bf:app:Sources/MacGuard/Views/Styles.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 734D3B1F12C7DB87BC879057;
+		};
+		179EE29A82213DF2DBDB107F /* bf:test:Tests/MacGuardTests/MacGuardTests.swift */ = {
+			isa = PBXBuildFile;
+			fileRef = 933034C9903990DA82B50D44;
+		};
+		88ACEB7D2B5303F8E82A2AE8 /* bf:app:Assets.xcassets */ = {
+			isa = PBXBuildFile;
+			fileRef = EDC23EA41740FFE07732549F;
+		};
+		DBAA2C2AD1E5B55B98D1A91A /* bf:app:framework:MacGuardKit.framework */ = {
+			isa = PBXBuildFile;
+			fileRef = 75D454AFD31C28B62F6811E7;
+		};
+		313D4E4C0E0F2E24ACD96F9B /* bf:app:copy:MacGuardKit.framework */ = {
+			isa = PBXBuildFile;
+			fileRef = 75D454AFD31C28B62F6811E7;
+		};
+		996DB2D7D8D5673A5F694FA4 /* bf:test:framework:MacGuardKit.framework */ = {
+			isa = PBXBuildFile;
+			fileRef = 75D454AFD31C28B62F6811E7;
+		};
+		A7D24354BA206C62C8420E80 /* phase:kit:sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				37B122189FAFA0583C54197C,
+				BEDD64E98596A2BA454813DE,
+				0F7493C50A276B0B9C3ACA35,
+				407B7FB5F851055980C64BB8,
+				238577F0B6B10215BA209C8B,
+				82D4F6975DB264D6DA68DEBE,
+				3C63A77DA6E11FC52C25EEDF,
+				86900D48179266333620E04D,
+				E2766A67DDF1E8ADFB2D027F,
+				CB927F82DA88CD51B9B25497,
+				FC5BF6B71F0C43A49042F0AA,
+				6A3B8AFBFD2355637905B37A,
+				54485B860B31E7C70F69B5D6,
+				39244CF01060B6213CA5B116,
+				7C008AED368BDBE13799AE5E,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584985D25D3C91ECF23FEE96 /* phase:kit:frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		847A9AE4DD6A7749241C7CAA /* phase:kit:resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4821909E9BF9E73E471FEA84 /* phase:app:sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5BF9D7108FCF3012F5EC26DC,
+				5F9C4BCCC7B19EFB2A1EE72E,
+				C29351AC7AA2BE881B4F0CFF,
+				73C45CEBFF98D8A73DD00096,
+				FE91A0EDCEBE217907474970,
+				C5D46BB438E7EA036F0BE522,
+				B18090C5930ECA3C89F777DA,
+				DB18E125759197B605F6F45E,
+				319108507BE810F2762BE4E6,
+				FB2B1D4C67286B52ACF9F6A3,
+				89FD59C932DFCBC5C36B2B4E,
+				9BFBD2BB41B1D94A0AB0708F,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6EFAB1ECC0D092E20FE51FCD /* phase:app:frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DBAA2C2AD1E5B55B98D1A91A,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F667297ED3AB90EAC07798D4 /* phase:app:resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				88ACEB7D2B5303F8E82A2AE8,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C21FCC42870090A5497C15B9 /* phase:app:copy */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Frameworks";
+			dstSubfolderSpec = 10;
+			files = (
+				313D4E4C0E0F2E24ACD96F9B,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BDA9E329ACCE0E746140CA84 /* phase:test:sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				179EE29A82213DF2DBDB107F,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		54AB89D79F92BD2966E41BD8 /* phase:test:frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				996DB2D7D8D5673A5F694FA4,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		25B7C02526925672442B0E39 /* phase:test:resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		178B2E15CD03527905941ED8 /* dep:app:MacGuardKit */ = {
+			isa = PBXTargetDependency;
+			target = 246377B638A46DCFC30C70A6;
+			targetProxy = 7F5976DD112AF6623CB4470E;
+		};
+		F88D3F02930807EA68480930 /* test:dep:MacGuardKit */ = {
+			isa = PBXTargetDependency;
+			target = 246377B638A46DCFC30C70A6;
+			targetProxy = 230B052C8739791567BDF6B3;
+		};
+		7F5976DD112AF6623CB4470E /* proxy:app:MacGuardKit */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63A9F0EA7BB98050796B649E;
+			proxyType = 1;
+			remoteGlobalIDString = 246377B638A46DCFC30C70A6;
+			remoteInfo = MacGuardKit;
+		};
+		230B052C8739791567BDF6B3 /* proxy:test:MacGuardKit */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63A9F0EA7BB98050796B649E;
+			proxyType = 1;
+			remoteGlobalIDString = 246377B638A46DCFC30C70A6;
+			remoteInfo = MacGuardKit;
+		};
+		4A43692AD8BCEEB8B727C85B /* config:project:Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_COMPILATION_MODE = singlefile;
+			};
+			name = Debug;
+		};
+		C28449456A5A705A7479770B /* config:project:Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = s;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				DEPLOYMENT_POSTPROCESSING = YES;
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_STYLE = non-global;
+			};
+			name = Release;
+		};
+		1F4E3D13C2320EDA50221924 /* configlist:project */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A43692AD8BCEEB8B727C85B,
+				C28449456A5A705A7479770B,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EB1CD7A50DC0D6B9540AB373 /* config:kit:Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_COMPILATION_MODE = singlefile;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macguard.kit;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = FMWK;
+				PRODUCT_NAME = MacGuardKit;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		8129ADF7D749771AA0A753AB /* config:kit:Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_COMPILATION_MODE = singlefile;
+				DEPLOYMENT_POSTPROCESSING = YES;
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_STYLE = non-global;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macguard.kit;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = FMWK;
+				PRODUCT_NAME = MacGuardKit;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		0A7D1029C636EA6057CA4CDF /* configlist:kit */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EB1CD7A50DC0D6B9540AB373,
+				8129ADF7D749771AA0A753AB,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0615050D04BD2DC4E6CFFAFF /* config:app:Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_COMPILATION_MODE = singlefile;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Sources/MacGuard/MacGuard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(BUILT_PRODUCTS_DIR)";
+				INFOPLIST_FILE = Sources/MacGuard/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macguard.app;
+				PRODUCT_MODULE_NAME = MacGuard;
+				PRODUCT_NAME = MacGuard;
+			};
+			name = Debug;
+		};
+		2761849A6D0E26CA4E1817A1 /* config:app:Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_COMPILATION_MODE = singlefile;
+				DEPLOYMENT_POSTPROCESSING = YES;
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_STYLE = non-global;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Sources/MacGuard/MacGuard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(BUILT_PRODUCTS_DIR)";
+				INFOPLIST_FILE = Sources/MacGuard/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macguard.app;
+				PRODUCT_MODULE_NAME = MacGuard;
+				PRODUCT_NAME = MacGuard;
+			};
+			name = Release;
+		};
+		1D97B77EAD2380603A3F2A82 /* configlist:app */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0615050D04BD2DC4E6CFFAFF,
+				2761849A6D0E26CA4E1817A1,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B48F0637DA179A96BEA0C97B /* config:test:Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_COMPILATION_MODE = singlefile;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(BUILT_PRODUCTS_DIR)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macguard.tests;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = BNDL;
+				PRODUCT_NAME = MacGuardTests;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacGuard.app/Contents/MacOS/MacGuard";
+			};
+			name = Debug;
+		};
+		AAEC77A85B92260B0596B84C /* config:test:Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = gnu++20;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_MODULE_DEBUGGABLE = YES;
+				CLANG_ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_DIRECTIVE = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_NS_IMPLICIT_BOOLEAN_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_PROTOTYPES = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				VERSIONING_SYSTEM = apple-generic;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_COMPILATION_MODE = singlefile;
+				DEPLOYMENT_POSTPROCESSING = YES;
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_STYLE = non-global;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(BUILT_PRODUCTS_DIR)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macguard.tests;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = BNDL;
+				PRODUCT_NAME = MacGuardTests;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacGuard.app/Contents/MacOS/MacGuard";
+			};
+			name = Release;
+		};
+		96375ECE1B94BBE7901BC88B /* configlist:test */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B48F0637DA179A96BEA0C97B,
+				AAEC77A85B92260B0596B84C,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		246377B638A46DCFC30C70A6 /* target:MacGuardKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0A7D1029C636EA6057CA4CDF;
+			buildPhases = (
+				A7D24354BA206C62C8420E80,
+				584985D25D3C91ECF23FEE96,
+				847A9AE4DD6A7749241C7CAA,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = MacGuardKit;
+			productName = MacGuardKit;
+			productReference = 75D454AFD31C28B62F6811E7;
+			productType = com.apple.product-type.framework;
+		};
+		204A5AB096C4996349E24E4E /* target:MacGuard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D97B77EAD2380603A3F2A82;
+			buildPhases = (
+				4821909E9BF9E73E471FEA84,
+				6EFAB1ECC0D092E20FE51FCD,
+				F667297ED3AB90EAC07798D4,
+				C21FCC42870090A5497C15B9,
+			);
+			buildRules = ();
+			dependencies = (
+				178B2E15CD03527905941ED8,
+			);
+			name = MacGuard;
+			productName = MacGuard;
+			productReference = 546F8112B3BB06C9E96053DD;
+			productType = com.apple.product-type.application;
+		};
+		6F925F38D61D31DB89359ED5 /* target:MacGuardTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 96375ECE1B94BBE7901BC88B;
+			buildPhases = (
+				BDA9E329ACCE0E746140CA84,
+				54AB89D79F92BD2966E41BD8,
+				25B7C02526925672442B0E39,
+			);
+			buildRules = ();
+			dependencies = (
+				F88D3F02930807EA68480930,
+			);
+			name = MacGuardTests;
+			productName = MacGuardTests;
+			productReference = FADAB4A7EE7DD7E356DCDE97;
+			productType = com.apple.product-type.bundle.unit-test;
+		};
+		63A9F0EA7BB98050796B649E /* root */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					246377B638A46DCFC30C70A6 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					204A5AB096C4996349E24E4E = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					6F925F38D61D31DB89359ED5 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 1F4E3D13C2320EDA50221924;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 518DA81DB9B99529C0C0AEBE;
+			productRefGroup = 547D009064F7C3F13BEF3460;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				246377B638A46DCFC30C70A6,
+				204A5AB096C4996349E24E4E,
+				6F925F38D61D31DB89359ED5,
+			);
+		};
+	};
+	rootObject = 63A9F0EA7BB98050796B649E /* Project object */;
+}

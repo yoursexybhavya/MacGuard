@@ -4,6 +4,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
     case dashboard = "Dashboard"
     case assistant = "AI Assistant"
     case storage = "Storage Analyzer"
+    case duplicates = "Duplicate Finder"
     case organizer = "File Organizer"
     case cleanup = "Cleanup Center"
     case approvals = "Approvals & History"
@@ -16,6 +17,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
         case .dashboard: return "speedometer"
         case .assistant: return "sparkles"
         case .storage: return "chart.pie.fill"
+        case .duplicates: return "doc.on.doc.fill"
         case .organizer: return "folder.badge.gearshape"
         case .cleanup: return "trash.fill"
         case .approvals: return "clock.arrow.circlepath"
@@ -46,6 +48,8 @@ public struct MainView: View {
                     AssistantView()
                 case .storage:
                     StorageView()
+                case .duplicates:
+                    DuplicatesView()
                 case .organizer:
                     OrganizerView()
                 case .cleanup:
