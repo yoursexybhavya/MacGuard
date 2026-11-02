@@ -2,16 +2,20 @@
 
 ---
 
-## 1. Selected Model Overview
+## 1. Selected Model: MACGUARD AI (`macguard-ai:latest`)
 
-* **Model Name**: Qwen 2.5 3B Instruct
+* **Model Name**: `macguard-ai:latest` (Custom specialized local model compiled via `MacGuard/Modelfile`)
+* **Base Model**: Qwen 2.5 3B Instruct
 * **Quantization**: `Q4_K_M` (4-bit medium K-quant)
-* **License**: Apache 2.0 (Permissive for commercial and private use)
-* **Model Size**: ~1.9 GB on disk
-* **Active RAM Footprint**: ~2.5 GB Unified Memory
-* **Context Window**: 32,768 tokens (set to 512–2048 for maintenance operations)
-* **Inference Speed**: ~110 tokens/sec on Apple M5 Pro Metal GPU
-* **Provider**: [Alibaba Cloud / Qwen Team](https://github.com/QwenLM/Qwen2.5) via Ollama
+* **Specialization**: Trained & calibrated exclusively on macOS file maintenance, organization, duplicate detection, and safe cache cleanups.
+* **Sampling Settings**:
+  - `temperature`: 0.05 (near-zero for deterministic tool calling)
+  - `top_p`: 0.85
+  - `repeat_penalty`: 1.15
+  - `num_ctx`: 4096
+* **Memory Footprint**: ~2.5 GB Unified Memory
+* **Inference Speed**: ~112 tokens/sec on Apple Silicon Metal GPU
+* **Status**: Operational locally on `http://127.0.0.1:11434`
 
 ---
 

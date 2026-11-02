@@ -128,7 +128,7 @@ struct SidebarView: View {
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(.primary)
                 }
-                Text("Qwen 2.5 3B • Local Offline")
+                Text("MacGuard AI • Specialized Local Engine")
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }

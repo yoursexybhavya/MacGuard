@@ -58,7 +58,7 @@ public final class OllamaService: Sendable {
     }
 
     /// Sends a prompt with strict JSON output formatting for tool calling
-    public func generateJSON(prompt: String, systemPrompt: String, model: String = "qwen2.5:3b") async throws -> String {
+    public func generateJSON(prompt: String, systemPrompt: String, model: String = "macguard-ai:latest") async throws -> String {
         let generateURL = baseURL.appendingPathComponent("api/generate")
         var request = URLRequest(url: generateURL)
         request.httpMethod = "POST"

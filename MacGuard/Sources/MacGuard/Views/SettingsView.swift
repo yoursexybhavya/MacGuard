@@ -37,7 +37,7 @@ public struct SettingsView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Qwen 2.5 3B Instruct (Q4_K_M)")
+                                Text("MacGuard AI Specialized Engine (macguard-ai:latest)")
                                     .font(.system(size: 13, weight: .semibold))
                                 Text(isOllamaOnline ? "Engine Online • Metal Hardware Accelerated" : "Local Standalone Fallback Active")
                                     .font(.system(size: 11))

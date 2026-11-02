@@ -44,7 +44,7 @@ public struct AssistantView: View {
                         .font(.system(size: 16, weight: .bold))
                 }
                 Spacer()
-                Text("Powered by Qwen 2.5 3B (Local Metal)")
+                Text("Powered by MacGuard AI Specialized Model (Local Metal)")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
