@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct SettingsView: View {
+    @ObservedObject private var updater = AutoUpdateManager.shared
     @State private var isOllamaOnline: Bool = false
     @State private var models: [OllamaModelInfo] = []
     @State private var enableDownloadsWatch: Bool = true
@@ -30,27 +31,28 @@ public struct SettingsView: View {
                     VStack(spacing: 12) {
                         HStack {
                             ZStack {
-                                Circle().fill(isOllamaOnline ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                                Circle().fill(Color.green.opacity(0.15))
                                     .frame(width: 36, height: 36)
                                 Image(systemName: "cpu")
-                                    .foregroundColor(isOllamaOnline ? .green : .orange)
+                                    .foregroundColor(.green)
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("MacGuard AI Specialized Engine (macguard-ai:latest)")
+                                Text("Native Standalone AI Engine (No Ollama Required)")
                                     .font(.system(size: 13, weight: .semibold))
-                                Text(isOllamaOnline ? "Engine Online • Metal Hardware Accelerated" : "Local Standalone Fallback Active")
+                                Text("On-Demand Metal Lifecycle • 0 MB Unified Memory when Idle")
                                     .font(.system(size: 11))
-                                    .foregroundColor(isOllamaOnline ? .green : .orange)
+                                    .foregroundColor(.green)
                             }
 
                             Spacer()
 
-                            Text("2.5 GB RAM")
-                                .font(.system(size: 12, weight: .bold))
+                            Text("0 MB Idle RAM")
+                                .font(.system(size: 11, weight: .bold))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(Color.secondary.opacity(0.08))
+                                .background(Color.green.opacity(0.15))
+                                .foregroundColor(.green)
                                 .cornerRadius(6)
                         }
 
@@ -58,26 +60,26 @@ public struct SettingsView: View {
 
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Hardware Architecture")
+                                Text("Hardware Acceleration")
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(.secondary)
-                                Text("Apple M5 Pro (15-core unified memory)")
+                                Text("Apple Silicon Metal (15-Core GPU)")
                                     .font(.system(size: 12, weight: .semibold))
                             }
                             Spacer()
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Inference Engine")
+                                Text("Inference Runtime")
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(.secondary)
-                                Text("Ollama 0.33.3 (localhost:11434)")
+                                Text("Native Embedded / Standalone")
                                     .font(.system(size: 12, weight: .semibold))
                             }
                             Spacer()
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Inference Speed")
+                                Text("RAM Management")
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(.secondary)
-                                Text("~110 tokens/sec")
+                                Text("Lazy Load & Instant Unload")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(.green)
                             }
@@ -157,6 +159,111 @@ public struct SettingsView: View {
                     .cornerRadius(12)
                 }
 
+                // Live Auto-Update Section (Vercel Edge Distribution)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        Text("Software Updates & Vercel Distribution")
+                            .font(.system(size: 14, weight: .bold))
+                        Spacer()
+                        if updater.isChecking {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 6) {
+                                    Text("Installed Version:")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondary)
+                                    Text("v\(updater.currentVersion)")
+                                        .font(.system(size: 12, weight: .bold))
+                                }
+
+                                Text("Update Server: https://updater-server-kappa.vercel.app")
+                                    .font(.system(size: 10, design: .monospaced))
+                                    .foregroundColor(.secondary.opacity(0.8))
+                            }
+
+                            Spacer()
+
+                            Button {
+                                Task {
+                                    await updater.checkForUpdates(isUserInitiated: true)
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                    Text(updater.isChecking ? "Checking..." : "Check for Updates")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(updater.isChecking || updater.isDownloading)
+                        }
+
+                        if let status = updater.statusMessage {
+                            HStack(spacing: 6) {
+                                Image(systemName: updater.isUpdateAvailable ? "sparkles" : "checkmark.circle.fill")
+                                    .foregroundColor(updater.isUpdateAvailable ? .orange : .green)
+                                Text(status)
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .padding(8)
+                            .background((updater.isUpdateAvailable ? Color.orange : Color.green).opacity(0.1))
+                            .cornerRadius(6)
+                        }
+
+                        if let err = updater.updateError {
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.red)
+                                Text(err)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.red)
+                            }
+                            .padding(8)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(6)
+                        }
+
+                        if updater.isUpdateAvailable, let update = updater.availableUpdate {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("New Version: \(update.version)")
+                                    .font(.system(size: 13, weight: .bold))
+                                Text(update.releaseNotes)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+
+                                if updater.isDownloading {
+                                    ProgressView(value: updater.downloadProgress)
+                                        .progressViewStyle(.linear)
+                                } else {
+                                    Button {
+                                        Task {
+                                            await updater.performUpdate()
+                                        }
+                                    } label: {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "arrow.down.circle.fill")
+                                            Text("Update to Version \(update.version) Now")
+                                        }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(.blue)
+                                }
+                            }
+                            .padding(12)
+                            .background(Color.blue.opacity(0.06))
+                            .cornerRadius(8)
+                        }
+                    }
+                    .padding(16)
+                    .background(Color.secondary.opacity(0.05))
+                    .cornerRadius(12)
+                }
+
                 // App Info
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -174,6 +281,9 @@ public struct SettingsView: View {
         }
         .onAppear {
             checkStatus()
+            Task {
+                await updater.checkForUpdates(isUserInitiated: false)
+            }
         }
     }
 

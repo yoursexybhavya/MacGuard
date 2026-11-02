@@ -1,0 +1,9 @@
+{
+  "name": "macguard-update-server",
+  "version": "1.0.0",
+  "description": "Auto-update and release distribution server for Project MacGuard",
+  "private": true,
+  "scripts": {
+    "start": "node api/version.js"
+  }
+}

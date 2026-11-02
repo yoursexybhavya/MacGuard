@@ -132,7 +132,7 @@ struct SidebarView: View {
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(.primary)
                 }
-                Text("MacGuard AI • Specialized Local Engine")
+                Text("Standalone Offline AI • 0 MB Idle RAM")
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }

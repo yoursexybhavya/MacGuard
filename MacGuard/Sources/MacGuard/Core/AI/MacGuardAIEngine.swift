@@ -41,10 +41,13 @@ public final class MacGuardAIEngine: Sendable {
 
     /// Processes a user natural language query and dispatches appropriate maintenance operations
     public func processUserQuery(_ query: String) async -> AIExecutionResult {
+        // 1. Primary: Run Standalone Offline Engine (0 MB idle RAM, no Ollama required)
+        let standaloneResult = await StandaloneAIEngine.shared.analyzeQuery(query)
+        
+        // 2. If a local Ollama daemon is optionally running, we can check for deep reasoning,
+        // but Ollama is NEVER required for offline maintenance or execution.
         let ollama = OllamaService.shared
-        let isAvailable = await ollama.isServiceAvailable()
-
-        if isAvailable {
+        if await ollama.isServiceAvailable() {
             do {
                 let jsonString = try await ollama.generateJSON(prompt: query, systemPrompt: systemPrompt)
                 if let data = jsonString.data(using: .utf8),
@@ -52,12 +55,11 @@ public final class MacGuardAIEngine: Sendable {
                     return executeDispatchedTool(response: response, originalQuery: query)
                 }
             } catch {
-                Self.logger.warning("Ollama inference failed or timed out: \(error.localizedDescription, privacy: .public). Falling back to heuristic engine.")
+                Self.logger.debug("Optional Ollama call returned error, using standalone offline engine result: \(error.localizedDescription, privacy: .public)")
             }
         }
 
-        // Deterministic Heuristic Fallback
-        return executeHeuristicFallback(query: query)
+        return standaloneResult
     }
 
     private func executeDispatchedTool(response: MacGuardResponse, originalQuery: String) -> AIExecutionResult {

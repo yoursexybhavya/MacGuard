@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MacGuard — Intelligent Local AI macOS Maintenance</title>
+  <link rel="icon" href="https://img.icons8.com/color/96/shield.png" type="image/png">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --accent: #58a6ff;
+      --text: #f0f6fc;
+      --subtext: #8b949e;
+      --border: #30363d;
+      --green: #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 99px;
+      background: rgba(88, 166, 255, 0.12);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.lead {
+      font-size: 18px;
+      color: var(--subtext);
+      margin-bottom: 32px;
+    }
+    .cta-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+    }
+    .btn-primary:hover {
+      background: #79c0ff;
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      text-align: left;
+      margin-bottom: 48px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .card h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .card p {
+      font-size: 13px;
+      color: var(--subtext);
+    }
+    footer {
+      font-size: 12px;
+      color: var(--subtext);
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">🛡️ Project MacGuard 1.0.1 Released</div>
+    <h1>Private, Local-First AI Maintenance for Mac</h1>
+    <p class="lead">Built natively with Swift 6 and Apple Silicon acceleration. Zero cloud telemetry. Reversible Trash safety. On-demand AI with 0 MB idle RAM footprint.</p>
+
+    <div class="cta-group">
+      <a href="/api/download" class="btn btn-primary">
+        <span></span> Download MacGuard.zip
+      </a>
+      <a href="https://github.com/yoursexybhavya/MacGuard" class="btn btn-secondary" target="_blank">
+        View on GitHub
+      </a>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>🧠 Standalone Offline AI</h3>
+        <p>No Ollama required. The local engine runs only when actively requested, freeing all unified memory upon idle.</p>
+      </div>
+      <div class="card">
+        <h3>🔍 One-Click Finder Inspection</h3>
+        <p>Directly reveal any file or cache in macOS Finder with one click to verify contents before removing.</p>
+      </div>
+      <div class="card">
+        <h3>🛡️ Keeper Protection Duplicates</h3>
+        <p>Cryptographic SHA-256 duplicate finder that locks the oldest copy as the untouchable keeper.</p>
+      </div>
+      <div class="card">
+        <h3>⚡ Live In-App Auto Updates</h3>
+        <p>Seamlessly updates your installed copy of MacGuard directly from this Vercel distribution server.</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>MacGuard is open source under MIT License • Running on Vercel Edge Server</p>
+    </footer>
+  </div>
+</body>
+</html>
