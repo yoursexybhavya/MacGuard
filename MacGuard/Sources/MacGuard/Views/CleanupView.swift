@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 public struct CleanupView: View {
     @State private var candidates: [CleanupTarget] = []
@@ -109,19 +110,60 @@ public struct CleanupView: View {
                                     Text(target.explanation)
                                         .font(.system(size: 11))
                                         .foregroundColor(.secondary)
-                                    Text(target.path)
-                                        .font(.system(size: 9))
-                                        .foregroundColor(.secondary.opacity(0.8))
+
+                                    Button {
+                                        revealInFinder(path: target.path)
+                                    } label: {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "folder")
+                                                .font(.system(size: 9))
+                                            Text(target.path)
+                                                .font(.system(size: 10, design: .monospaced))
+                                                .underline()
+                                        }
+                                        .foregroundColor(.secondary)
                                         .lineLimit(1)
                                         .truncationMode(.middle)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Click to reveal in Finder")
                                 }
 
                                 Spacer()
 
                                 Text(target.formattedSize)
                                     .font(.system(size: 13, weight: .bold))
+
+                                Button {
+                                    revealInFinder(path: target.path)
+                                } label: {
+                                    Image(systemName: "arrow.up.forward.app")
+                                        .font(.system(size: 12))
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .help("Reveal in Finder to inspect before deleting")
                             }
                             .padding(.vertical, 4)
+                            .contextMenu {
+                                Button {
+                                    revealInFinder(path: target.path)
+                                } label: {
+                                    Label("Reveal in Finder", systemImage: "folder")
+                                }
+                                Button {
+                                    openContainingFolder(path: target.path)
+                                } label: {
+                                    Label("Open Containing Folder", systemImage: "arrow.up.forward.app")
+                                }
+                                Divider()
+                                Button {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(target.path, forType: .string)
+                                } label: {
+                                    Label("Copy Path", systemImage: "doc.on.doc")
+                                }
+                            }
                         }
                     }
                 }
@@ -211,5 +253,20 @@ public struct CleanupView: View {
         case .highRisk: return .red
         case .protected: return .gray
         }
+    }
+
+    private func revealInFinder(path: String) {
+        let url = URL(fileURLWithPath: path)
+        if FileManager.default.fileExists(atPath: path) {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } else {
+            let parent = url.deletingLastPathComponent()
+            NSWorkspace.shared.open(parent)
+        }
+    }
+
+    private func openContainingFolder(path: String) {
+        let parent = URL(fileURLWithPath: path).deletingLastPathComponent()
+        NSWorkspace.shared.open(parent)
     }
 }

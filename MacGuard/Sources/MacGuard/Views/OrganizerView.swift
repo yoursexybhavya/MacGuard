@@ -120,8 +120,33 @@ public struct OrganizerView: View {
                             Text(p.formattedSize)
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(.secondary)
+
+                            Button {
+                                let url = URL(fileURLWithPath: p.sourcePath)
+                                NSWorkspace.shared.activateFileViewerSelecting([url])
+                            } label: {
+                                Image(systemName: "arrow.up.forward.app")
+                                    .font(.system(size: 11))
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .help("Reveal in Finder")
                         }
                         .padding(.vertical, 4)
+                        .contextMenu {
+                            Button {
+                                let url = URL(fileURLWithPath: p.sourcePath)
+                                NSWorkspace.shared.activateFileViewerSelecting([url])
+                            } label: {
+                                Label("Reveal in Finder", systemImage: "folder")
+                            }
+                            Button {
+                                let parent = URL(fileURLWithPath: p.sourcePath).deletingLastPathComponent()
+                                NSWorkspace.shared.open(parent)
+                            } label: {
+                                Label("Open Containing Folder", systemImage: "arrow.up.forward.app")
+                            }
+                        }
                     }
                 }
             }

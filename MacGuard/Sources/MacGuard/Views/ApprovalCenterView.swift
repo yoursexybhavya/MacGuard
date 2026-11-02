@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 public struct ApprovalCenterView: View {
     @State private var history: [OperationRecord] = []
@@ -108,6 +109,23 @@ public struct ApprovalCenterView: View {
                         }
 
                         Spacer()
+
+                        Button {
+                            let path = record.destinationPath ?? record.sourcePath
+                            let url = URL(fileURLWithPath: path)
+                            if FileManager.default.fileExists(atPath: path) {
+                                NSWorkspace.shared.activateFileViewerSelecting([url])
+                            } else {
+                                let parent = url.deletingLastPathComponent()
+                                NSWorkspace.shared.open(parent)
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.forward.app")
+                                .font(.system(size: 11))
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .help("Reveal location in Finder")
 
                         if !record.isRolledBack {
                             Button("Rollback") {
