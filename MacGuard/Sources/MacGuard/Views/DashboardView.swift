@@ -3,6 +3,7 @@ import SwiftUI
 public struct DashboardView: View {
     public let onNavigate: (NavigationSection) -> Void
 
+    @ObservedObject private var permissions = PermissionManager.shared
     @State private var overview: StorageOverview?
     @State private var cleanupCandidates: [CleanupTarget] = []
     @State private var recentOperations: [OperationRecord] = []
@@ -38,6 +39,57 @@ public struct DashboardView: View {
                         .padding(.vertical, 8)
                     }
                     .buttonStyle(.borderedProminent)
+                }
+
+                // Full Disk Access Alert Banner
+                if !permissions.hasFullDiskAccess {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            Circle().fill(Color.orange.opacity(0.18))
+                                .frame(width: 38, height: 38)
+                            Image(systemName: "lock.laptopcomputer")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.orange)
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 6) {
+                                Text("Full Disk Access Recommended")
+                                    .font(.system(size: 13, weight: .bold))
+                                Text("One-Time macOS Setup")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.orange.opacity(0.15))
+                                    .foregroundColor(.orange)
+                                    .cornerRadius(4)
+                            }
+                            Text("Prevent repeated macOS permission popups and allow MacGuard to inspect disk space, clean developer caches, and find duplicates across your entire drive.")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            permissions.openFullDiskAccessSettings()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.up.forward.app")
+                                Text("Grant Full Disk Access")
+                            }
+                            .padding(.horizontal, 6)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                    }
+                    .padding(14)
+                    .background(Color.orange.opacity(0.08))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.orange.opacity(0.25), lineWidth: 1)
+                    )
                 }
 
                 // Storage Ring & Metric Cards
@@ -132,12 +184,12 @@ public struct DashboardView: View {
                             Text("Security Guard")
                                 .font(.system(size: 14, weight: .semibold))
                             Spacer()
-                            Text("Active")
+                            Text(permissions.hasFullDiskAccess ? "Full Disk Access" : "Standard Access")
                                 .font(.system(size: 10, weight: .bold))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Color.green.opacity(0.2))
-                                .foregroundColor(.green)
+                                .background((permissions.hasFullDiskAccess ? Color.green : Color.orange).opacity(0.2))
+                                .foregroundColor(permissions.hasFullDiskAccess ? .green : .orange)
                                 .cornerRadius(6)
                         }
 
@@ -248,7 +300,11 @@ public struct DashboardView: View {
             .padding(24)
         }
         .onAppear {
+            permissions.checkPermissions()
             refreshData()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            permissions.checkPermissions()
         }
     }
 

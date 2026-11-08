@@ -52,15 +52,27 @@ public final class StorageAnalyzer: Sendable {
 
         let usedSpace = max(0, totalSpace - freeSpace)
 
-        // 2. Sample standard user directories for fast interactive breakdown
-        let targets: [URL] = [
+        // 2. Sample standard user directories for fast interactive breakdown.
+        // If Full Disk Access is not yet granted, we avoid probing ~/Music and ~/Pictures
+        // so macOS does not bombard the user with modal prompts (e.g. Apple Music / Photos).
+        var targets: [URL] = [
             homeURL.appendingPathComponent("Downloads"),
-            homeURL.appendingPathComponent("Desktop"),
-            homeURL.appendingPathComponent("Documents"),
-            homeURL.appendingPathComponent("Pictures"),
-            homeURL.appendingPathComponent("Movies"),
-            homeURL.appendingPathComponent("Music")
+            homeURL.appendingPathComponent("Desktop")
         ]
+
+        if PermissionManager.isFullDiskAccessGranted {
+            targets.append(contentsOf: [
+                homeURL.appendingPathComponent("Documents"),
+                homeURL.appendingPathComponent("Pictures"),
+                homeURL.appendingPathComponent("Movies"),
+                homeURL.appendingPathComponent("Music")
+            ])
+        } else {
+            let docURL = homeURL.appendingPathComponent("Documents")
+            if fileManager.fileExists(atPath: docURL.path) {
+                targets.append(docURL)
+            }
+        }
 
         var categoryTotals: [FileCategory: Int64] = [:]
         for cat in FileCategory.allCases {

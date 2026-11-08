@@ -366,6 +366,22 @@ struct ChatBubbleView: View {
                         .font(.system(size: 13))
                         .foregroundColor(.primary)
 
+                    if message.text.contains("Full Disk Access") && !PermissionManager.isFullDiskAccessGranted {
+                        Button {
+                            PermissionManager.shared.openFullDiskAccessSettings()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "gearshape.fill")
+                                Text("Open Full Disk Access Settings")
+                            }
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                    }
+
                     // Embedded Interactive Action Cards
                     if let result = message.result {
                         switch result {

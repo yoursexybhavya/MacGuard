@@ -315,5 +315,22 @@ struct AIEngineTests {
             Issue.record("Expected messageOnly for audio creator query")
         }
     }
+
+    @Test("Permission inquiry explains Full Disk Access setup")
+    func testPermissionQuery() async {
+        let result = await StandaloneAIEngine.shared.analyzeQuery("why is it asking again and again for access? can we give full disk access?")
+        switch result {
+        case .messageOnly(let text):
+            #expect(text.contains("Full Disk Access"))
+        default:
+            Issue.record("Expected messageOnly for permission query")
+        }
+    }
+
+    @Test("PermissionManager checks status safely without crashing")
+    func testPermissionManager() {
+        let granted = PermissionManager.isFullDiskAccessGranted
+        #expect(granted == true || granted == false)
+    }
 }
 

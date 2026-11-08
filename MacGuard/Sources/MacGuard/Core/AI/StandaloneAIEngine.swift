@@ -49,7 +49,29 @@ public final class StandaloneAIEngine: Sendable {
             )
         }
 
-        // 5. Antivirus / Malware / Security inquiries
+        // 5. Permissions & Full Disk Access Inquiries
+        if isPermissionQuery(lower) {
+            let fdaStatus = PermissionManager.isFullDiskAccessGranted
+            if fdaStatus {
+                return .messageOnly(
+                    "Full Disk Access is currently **enabled**! MacGuard has unrestricted access to analyze APFS storage, locate duplicate files, and safely clean developer caches across your Mac without repeated permission prompts."
+                )
+            } else {
+                return .messageOnly(
+                    """
+                    macOS protects user directories (Documents, Downloads, Music) with individual security prompts.
+
+                    To permanently stop macOS from asking for permission on every folder, you can grant **Full Disk Access**:
+                    1. Open **System Settings > Privacy & Security > Full Disk Access**.
+                    2. Toggle on **MacGuard** (or drag MacGuard.app from /Applications into the list).
+
+                    Once enabled, MacGuard can analyze disk space, clean developer caches, and find duplicates without any popup dialogs. You can also click **'Grant Full Disk Access'** directly on the Dashboard banner.
+                    """
+                )
+            }
+        }
+
+        // 6. Antivirus / Malware / Security inquiries
         if isSecurityOrVirusQuery(lower) {
             return .messageOnly(
                 "macOS has built-in kernel-level security (XProtect and Gatekeeper) for malware protection. While MacGuard is not an antivirus signature scanner, I can scan your storage for leftover cache junk, failed downloads (.crdownload), or Windows artifacts ($RECYCLE.BIN, desktop.ini). Would you like to run a Safe Cleanup or Storage Analysis?"
@@ -189,6 +211,14 @@ public final class StandaloneAIEngine: Sendable {
             "organize", "sort", "clean up downloads", "group files",
             "tidy", "categorize", "arrange", "structure", "consolidate",
             "too many folders", "merge folders", "duplicate folders", "clean folders"
+        ]
+        return triggers.contains { text.contains($0) }
+    }
+
+    private func isPermissionQuery(_ text: String) -> Bool {
+        let triggers = [
+            "access", "permission", "permissions", "full disk access", "disk access",
+            "full computer access", "asking again and again", "why does it ask", "allow access"
         ]
         return triggers.contains { text.contains($0) }
     }

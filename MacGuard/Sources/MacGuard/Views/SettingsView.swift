@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct SettingsView: View {
     @ObservedObject private var updater = AutoUpdateManager.shared
+    @ObservedObject private var permissions = PermissionManager.shared
     @State private var isOllamaOnline: Bool = false
     @State private var models: [OllamaModelInfo] = []
     @State private var enableDownloadsWatch: Bool = true
@@ -116,6 +117,64 @@ public struct SettingsView: View {
                             title: "Protected System Whitelist",
                             desc: "/System, /Library, /usr, /bin, and sensitive user roots (.ssh, Keychains) are strictly immutable."
                         )
+                    }
+                    .padding(16)
+                    .background(Color.secondary.opacity(0.05))
+                    .cornerRadius(12)
+                }
+
+                // Full Disk Access (FDA) Permission Management
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        Text("macOS System Permissions & Full Disk Access")
+                            .font(.system(size: 14, weight: .bold))
+                        Spacer()
+                        HStack(spacing: 5) {
+                            Circle()
+                                .fill(permissions.hasFullDiskAccess ? Color.green : Color.orange)
+                                .frame(width: 8, height: 8)
+                            Text(permissions.hasFullDiskAccess ? "Full Disk Access Enabled" : "Access Pending")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(permissions.hasFullDiskAccess ? .green : .orange)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background((permissions.hasFullDiskAccess ? Color.green : Color.orange).opacity(0.12))
+                        .cornerRadius(6)
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Why grant Full Disk Access?")
+                            .font(.system(size: 13, weight: .semibold))
+
+                        Text("By default, macOS asks for permission separately for Documents, Downloads, Music, etc. Granting Full Disk Access permanently silences these repeated popups and permits MacGuard to analyze APFS storage, locate duplicate files across your Mac, and clean developer caches.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .lineSpacing(2)
+
+                        HStack(spacing: 12) {
+                            Button {
+                                permissions.openFullDiskAccessSettings()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "gearshape.fill")
+                                    Text("Open Full Disk Access in System Settings")
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(permissions.hasFullDiskAccess ? .secondary : .blue)
+
+                            Button {
+                                let appURL = URL(fileURLWithPath: "/Applications/MacGuard.app")
+                                NSWorkspace.shared.activateFileViewerSelecting([appURL])
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.up.forward.app")
+                                    Text("Reveal MacGuard in Finder")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                        }
                     }
                     .padding(16)
                     .background(Color.secondary.opacity(0.05))
@@ -280,10 +339,14 @@ public struct SettingsView: View {
             .padding(24)
         }
         .onAppear {
+            permissions.checkPermissions()
             checkStatus()
             Task {
                 await updater.checkForUpdates(isUserInitiated: false)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            permissions.checkPermissions()
         }
     }
 
