@@ -2,18 +2,18 @@ import SwiftUI
 import AppKit
 
 public enum AssistantActiveSheet: Identifiable {
-    case organization([OrganizationProposal])
+    case organization(proposals: [OrganizationProposal], folderMerges: [FolderMergeProposal])
     case cleanup([CleanupTarget])
     case duplicates([DuplicateGroup])
 
     public var id: String {
         switch self {
-        case .organization(let items):
-            return "org_\(items.count)_\(items.first?.id.uuidString ?? "empty")"
+        case .organization(let p, let m):
+            return "org_\(p.count)_\(m.count)"
         case .cleanup(let items):
-            return "clean_\(items.count)_\(items.first?.id.uuidString ?? "empty")"
+            return "clean_\(items.count)"
         case .duplicates(let items):
-            return "dup_\(items.count)_\(items.first?.id ?? "empty")"
+            return "dup_\(items.count)"
         }
     }
 }
@@ -40,7 +40,7 @@ public struct AssistantView: View {
     @State private var messages: [ChatMessage] = [
         ChatMessage(
             isUser: false,
-            text: "Hello! I am MacGuard, your specialized local maintenance assistant. Ask me to organize your Downloads, find duplicate files, clean temporary caches, analyze disk space, or run a full system audit."
+            text: "Hello! I am MacGuard, your specialized local maintenance assistant. Ask me to organize your Downloads, merge messy folders, clean temporary caches, analyze disk space, or run a full system audit."
         )
     ]
     @State private var currentInput: String = ""
@@ -101,8 +101,8 @@ public struct AssistantView: View {
                         ForEach(messages) { msg in
                             ChatBubbleView(
                                 message: msg,
-                                onOpenOrganizationSheet: { proposals in
-                                    self.activeSheet = .organization(proposals)
+                                onOpenOrganizationSheet: { proposals, folderMerges in
+                                    self.activeSheet = .organization(proposals: proposals, folderMerges: folderMerges)
                                 },
                                 onOpenCleanupSheet: { cleanups in
                                     self.activeSheet = .cleanup(cleanups)
@@ -152,6 +152,9 @@ public struct AssistantView: View {
                     SuggestionChip(icon: "folder.badge.gearshape", text: "Organize my Downloads folder") {
                         sendQuery("Organize my Downloads folder")
                     }
+                    SuggestionChip(icon: "folder.fill.badge.plus", text: "Consolidate duplicate folders") {
+                        sendQuery("consolidate duplicate folders in Downloads")
+                    }
                     SuggestionChip(icon: "trash", text: "Find unnecessary files taking up space") {
                         sendQuery("Find unnecessary files taking up space")
                     }
@@ -196,15 +199,29 @@ public struct AssistantView: View {
         }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
-            case .organization(let proposals):
+            case .organization(let proposals, let folderMerges):
                 OrganizationApprovalSheet(
                     proposals: proposals,
-                    onApprove: { approvedProposals in
+                    folderMerges: folderMerges,
+                    onApprove: { approvedProposals, approvedMerges in
                         do {
-                            try FileOrganizer.shared.executeProposals(approvedProposals)
+                            if !approvedMerges.isEmpty {
+                                try FileOrganizer.shared.executeFolderMerges(approvedMerges)
+                            }
+                            if !approvedProposals.isEmpty {
+                                try FileOrganizer.shared.executeProposals(approvedProposals)
+                            }
+                            var parts: [String] = []
+                            if !approvedMerges.isEmpty {
+                                parts.append("consolidated \(approvedMerges.count) redundant folders")
+                            }
+                            if !approvedProposals.isEmpty {
+                                parts.append("organized \(approvedProposals.count) files")
+                            }
+                            let text = parts.joined(separator: " and ")
                             messages.append(ChatMessage(
                                 isUser: false,
-                                text: "Successfully organized \(approvedProposals.count) files into categorized folders. All changes are recorded in the Rollback Ledger."
+                                text: "Successfully \(text) into a clean, unified structure. All changes recorded in the Rollback Ledger."
                             ))
                         } catch {
                             messages.append(ChatMessage(
@@ -280,7 +297,7 @@ public struct AssistantView: View {
                 switch result {
                 case .messageOnly(let msg):
                     messages.append(ChatMessage(isUser: false, text: msg, result: result))
-                case .organizationPlan(let msg, _):
+                case .organizationPlan(let msg, _, _):
                     messages.append(ChatMessage(isUser: false, text: msg, result: result))
                 case .cleanupPlan(let msg, _):
                     messages.append(ChatMessage(isUser: false, text: msg, result: result))
@@ -319,7 +336,7 @@ public struct AssistantView: View {
 // MARK: - Chat Bubble View
 struct ChatBubbleView: View {
     let message: ChatMessage
-    let onOpenOrganizationSheet: ([OrganizationProposal]) -> Void
+    let onOpenOrganizationSheet: ([OrganizationProposal], [FolderMergeProposal]) -> Void
     let onOpenCleanupSheet: ([CleanupTarget]) -> Void
     let onOpenDuplicateSheet: ([DuplicateGroup]) -> Void
     let onTrashFile: (ScannedItem) -> Void
@@ -345,19 +362,20 @@ struct ChatBubbleView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(message.text)
+                    Text(LocalizedStringKey(message.text))
                         .font(.system(size: 13))
                         .foregroundColor(.primary)
 
                     // Embedded Interactive Action Cards
                     if let result = message.result {
                         switch result {
-                        case .organizationPlan(_, let proposals):
-                            if !proposals.isEmpty {
+                        case .organizationPlan(_, let proposals, let folderMerges):
+                            if !proposals.isEmpty || !folderMerges.isEmpty {
                                 ProposalActionCard(
                                     proposals: proposals,
+                                    folderMerges: folderMerges,
                                     onReview: {
-                                        onOpenOrganizationSheet(proposals)
+                                        onOpenOrganizationSheet(proposals, folderMerges)
                                     }
                                 )
                             }
@@ -620,17 +638,22 @@ struct StorageActionCard: View {
         case .archives: return .purple
         case .documents: return .blue
         case .media: return .pink
+        case .creative: return .indigo
+        case .skills: return .mint
+        case .academics: return .teal
         case .images: return .teal
         case .code: return .green
         case .caches: return .yellow
-        case .other: return .gray
+        case .junk: return .gray
+        case .other: return .secondary
         }
     }
 }
 
-// MARK: - Proposal Action Card (File Organization)
+// MARK: - Proposal Action Card (File Organization & Folder Consolidation)
 struct ProposalActionCard: View {
     let proposals: [OrganizationProposal]
+    let folderMerges: [FolderMergeProposal]
     let onReview: () -> Void
 
     var body: some View {
@@ -638,17 +661,51 @@ struct ProposalActionCard: View {
             HStack {
                 Image(systemName: "folder.badge.gearshape")
                     .foregroundColor(.blue)
-                Text("Proposed File Organization")
+                Text("Proposed Organization & Consolidation")
                     .font(.system(size: 13, weight: .bold))
                 Spacer()
-                Text("\(proposals.count) files")
+                Text("\(proposals.count) files • \(folderMerges.count) merges")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.blue)
             }
 
-            Text("MacGuard will sort files into tidy category subfolders without overwriting existing files.")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
+            // Folder Consolidation Notice
+            if !folderMerges.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                        Text("Consolidate \(folderMerges.count) Redundant Sibling Folders:")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.orange)
+                    }
+
+                    ForEach(folderMerges.prefix(3)) { merge in
+                        HStack(spacing: 4) {
+                            Text(merge.sourceName)
+                                .font(.system(size: 10, weight: .semibold))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 8))
+                                .foregroundColor(.secondary)
+                            Text(merge.destinationName)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.blue)
+                            Spacer()
+                            Text("\(merge.itemCount) items")
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.08))
+                        .cornerRadius(4)
+                    }
+                }
+                .padding(8)
+                .background(Color.orange.opacity(0.06))
+                .cornerRadius(6)
+            }
 
             // Category pills
             let grouped = Dictionary(grouping: proposals, by: { $0.category })
@@ -678,7 +735,7 @@ struct ProposalActionCard: View {
                         Image(systemName: "arrow.right")
                             .font(.system(size: 9))
                             .foregroundColor(.secondary)
-                        Text(p.proposedDestinationURL.lastPathComponent)
+                        Text(p.proposedDestinationURL.deletingLastPathComponent().lastPathComponent)
                             .font(.system(size: 10))
                             .foregroundColor(.blue)
                         Spacer()
@@ -696,7 +753,7 @@ struct ProposalActionCard: View {
             Button(action: onReview) {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
-                    Text("Review & Approve Plan (\(proposals.count) files)")
+                    Text("Review & Approve Plan (\(proposals.count) files, \(folderMerges.count) merges)")
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -732,7 +789,7 @@ struct CleanupActionCard: View {
                     .foregroundColor(.orange)
             }
 
-            Text("Discovered safe developer caches, system logs, and disposable disk images ready for Trash.")
+            Text("Discovered safe developer caches, system logs, disposable installers, and junk ready for Trash.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
 
@@ -939,14 +996,12 @@ struct FullAuditCard: View {
                         Text("Downloads Folder")
                             .font(.system(size: 11, weight: .bold))
                     }
-                    Text("\(summary.unorganizedFilesCount) files ready to categorize")
+                    Text("\(summary.unorganizedFilesCount) files • \(summary.folderMergesCount) merges")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
-                    if summary.unorganizedFilesCount > 0 {
-                        Button("Organize Now", action: onReviewOrganization)
-                            .buttonStyle(.bordered)
-                            .controlSize(.mini)
-                    }
+                    Button("Organize & Merge", action: onReviewOrganization)
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
                 }
                 .padding(10)
                 .background(Color.secondary.opacity(0.04))
@@ -988,110 +1043,169 @@ struct SuggestionChip: View {
     }
 }
 
-// MARK: - Organization Approval Sheet
+// MARK: - Organization & Consolidation Approval Sheet
 struct OrganizationApprovalSheet: View {
     let proposals: [OrganizationProposal]
-    let onApprove: ([OrganizationProposal]) -> Void
+    let folderMerges: [FolderMergeProposal]
+    let onApprove: ([OrganizationProposal], [FolderMergeProposal]) -> Void
     let onCancel: () -> Void
 
-    @State private var selectedIDs: Set<UUID>
+    @State private var selectedProposalIDs: Set<UUID>
+    @State private var selectedMergeIDs: Set<UUID>
 
-    init(proposals: [OrganizationProposal], onApprove: @escaping ([OrganizationProposal]) -> Void, onCancel: @escaping () -> Void) {
+    init(
+        proposals: [OrganizationProposal],
+        folderMerges: [FolderMergeProposal],
+        onApprove: @escaping ([OrganizationProposal], [FolderMergeProposal]) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
         self.proposals = proposals
+        self.folderMerges = folderMerges
         self.onApprove = onApprove
         self.onCancel = onCancel
-        _selectedIDs = State(initialValue: Set(proposals.map(\.id)))
+        _selectedProposalIDs = State(initialValue: Set(proposals.map(\.id)))
+        _selectedMergeIDs = State(initialValue: Set(folderMerges.map(\.id)))
     }
 
     var body: some View {
         VStack(spacing: 16) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Confirm File Organization")
+                    Text("Confirm Organization & Consolidation")
                         .font(.system(size: 16, weight: .bold))
-                    Text("Selected files will be categorized into subfolders. 100% reversible via Rollback Ledger.")
+                    Text("Consolidate redundant folders and group loose files. 100% reversible via Rollback Ledger.")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Button(selectedIDs.count == proposals.count ? "Deselect All" : "Select All") {
-                    if selectedIDs.count == proposals.count {
-                        selectedIDs.removeAll()
-                    } else {
-                        selectedIDs = Set(proposals.map(\.id))
-                    }
+                Button("Select All") {
+                    selectedProposalIDs = Set(proposals.map(\.id))
+                    selectedMergeIDs = Set(folderMerges.map(\.id))
                 }
                 .font(.system(size: 11))
             }
 
             List {
-                ForEach(proposals) { p in
-                    HStack(spacing: 10) {
-                        Toggle("", isOn: Binding(
-                            get: { selectedIDs.contains(p.id) },
-                            set: { isSelected in
-                                if isSelected {
-                                    selectedIDs.insert(p.id)
-                                } else {
-                                    selectedIDs.remove(p.id)
+                // Section 1: Redundant Folders Consolidation
+                if !folderMerges.isEmpty {
+                    Section(header: Text("Redundant Folders Consolidation (\(folderMerges.count))").font(.system(size: 12, weight: .bold)).foregroundColor(.orange)) {
+                        ForEach(folderMerges) { merge in
+                            HStack(spacing: 10) {
+                                Toggle("", isOn: Binding(
+                                    get: { selectedMergeIDs.contains(merge.id) },
+                                    set: { if $0 { selectedMergeIDs.insert(merge.id) } else { selectedMergeIDs.remove(merge.id) } }
+                                ))
+                                .labelsHidden()
+
+                                Image(systemName: "folder.fill.badge.plus")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.orange)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 4) {
+                                        Text(merge.sourceName)
+                                            .font(.system(size: 12, weight: .bold))
+                                        Image(systemName: "arrow.right")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.secondary)
+                                        Text(merge.destinationName)
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.blue)
+                                    }
+                                    Text(merge.reason)
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary)
                                 }
+
+                                Spacer()
+
+                                Text("\(merge.itemCount) items • \(merge.formattedSize)")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+
+                                Button {
+                                    NSWorkspace.shared.activateFileViewerSelecting([merge.sourceURL])
+                                } label: {
+                                    Image(systemName: "arrow.up.forward.app")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.blue)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Reveal Source in Finder")
                             }
-                        ))
-                        .labelsHidden()
-
-                        Image(systemName: p.category.systemIcon)
-                            .font(.system(size: 12))
-                            .foregroundColor(.blue)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(p.fileName)
-                                .font(.system(size: 12, weight: .semibold))
-                            HStack(spacing: 4) {
-                                Text(p.sourceURL.deletingLastPathComponent().lastPathComponent)
-                                Image(systemName: "arrow.right")
-                                    .font(.system(size: 9))
-                                Text(p.proposedDestinationURL.deletingLastPathComponent().lastPathComponent)
-                                    .foregroundColor(.blue)
-                            }
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
+                            .padding(.vertical, 4)
                         }
-
-                        Spacer()
-
-                        Text(p.formattedSize)
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-
-                        Button {
-                            NSWorkspace.shared.activateFileViewerSelecting([p.sourceURL])
-                        } label: {
-                            Image(systemName: "arrow.up.forward.app")
-                                .font(.system(size: 12))
-                                .foregroundColor(.blue)
-                        }
-                        .buttonStyle(.plain)
-                        .help("Reveal in Finder")
                     }
-                    .padding(.vertical, 4)
+                }
+
+                // Section 2: Loose Files Categorization
+                if !proposals.isEmpty {
+                    Section(header: Text("Loose Files to Categorize (\(proposals.count))").font(.system(size: 12, weight: .bold)).foregroundColor(.blue)) {
+                        ForEach(proposals) { p in
+                            HStack(spacing: 10) {
+                                Toggle("", isOn: Binding(
+                                    get: { selectedProposalIDs.contains(p.id) },
+                                    set: { if $0 { selectedProposalIDs.insert(p.id) } else { selectedProposalIDs.remove(p.id) } }
+                                ))
+                                .labelsHidden()
+
+                                Image(systemName: p.category.systemIcon)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.blue)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(p.fileName)
+                                        .font(.system(size: 12, weight: .semibold))
+                                    HStack(spacing: 4) {
+                                        Text(p.sourceURL.deletingLastPathComponent().lastPathComponent)
+                                        Image(systemName: "arrow.right")
+                                            .font(.system(size: 9))
+                                        Text(p.proposedDestinationURL.deletingLastPathComponent().lastPathComponent)
+                                            .foregroundColor(.blue)
+                                    }
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Text(p.formattedSize)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+
+                                Button {
+                                    NSWorkspace.shared.activateFileViewerSelecting([p.sourceURL])
+                                } label: {
+                                    Image(systemName: "arrow.up.forward.app")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.blue)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Reveal in Finder")
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
                 }
             }
-            .frame(height: 320)
+            .frame(height: 330)
 
             HStack {
                 Button("Cancel", action: onCancel)
                 Spacer()
-                Button("Approve Moving \(selectedIDs.count) Files") {
-                    let approved = proposals.filter { selectedIDs.contains($0.id) }
-                    onApprove(approved)
+                let totalActions = selectedProposalIDs.count + selectedMergeIDs.count
+                Button("Approve Selected (\(totalActions) Operations)") {
+                    let approvedProposals = proposals.filter { selectedProposalIDs.contains($0.id) }
+                    let approvedMerges = folderMerges.filter { selectedMergeIDs.contains($0.id) }
+                    onApprove(approvedProposals, approvedMerges)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(selectedIDs.isEmpty)
+                .disabled(totalActions == 0)
             }
             .padding(.top, 10)
         }
         .padding(20)
-        .frame(width: 600, height: 440)
+        .frame(width: 620, height: 460)
     }
 }
 
@@ -1217,7 +1331,6 @@ struct DuplicateApprovalSheet: View {
 
         var initial: Set<String> = []
         for group in duplicates {
-            // Default to selecting all copies except the first one (the original)
             for copy in group.files.dropFirst() {
                 initial.insert(copy.path)
             }

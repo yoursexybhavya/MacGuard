@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 import os
 
 public final class StandaloneAIEngine: Sendable {
@@ -20,21 +19,65 @@ public final class StandaloneAIEngine: Sendable {
         // 1. Boundary enforcement: Politely decline general non-maintenance questions
         if isOutOfScope(lower) {
             return .messageOnly(
-                "I am MACGUARD, your specialized Mac maintenance assistant. I am strictly calibrated for macOS storage optimization, duplicate detection, file organization, and cache cleaning. I do not answer general knowledge or unrelated requests."
+                "I am MACGUARD, your specialized Mac maintenance assistant. I am strictly calibrated for macOS storage optimization, duplicate detection, file organization, and cache cleaning. I do not answer general trivia, poetry, or unrelated queries."
             )
         }
 
         // 2. Identify target directory
         let targetDirectory = resolveTargetDirectory(from: lower)
 
-        // 3. Full system audit / comprehensive optimization request
+        // 3. Greetings
+        if isGreeting(lower) {
+            return .messageOnly(
+                "Hello! I'm MacGuard, your private AI maintenance assistant running locally on Apple Silicon. I can optimize your storage, clean redundant folders in Downloads, remove disposable caches, or find duplicate files. What would you like to do?"
+            )
+        }
+
+        // 4. Help & Capabilities
+        if isHelpQuery(lower) {
+            return .messageOnly(
+                """
+                Here is what I can do for your MacBook:
+                • 📁 **Intelligent File Organizer**: Groups loose files (.blend, .drfx, .zxp, .ccx, .skill, .opus) and merges redundant folders into a clean hierarchy.
+                • 🧹 **Safe System Cleanup**: Removes gigabytes of Xcode DerivedData, developer caches, diagnostic logs, and disposable installers.
+                • 🔍 **Cryptographic Duplicate Finder**: Identifies identical files via SHA-256 with 1-click Finder reveal.
+                • 📊 **Storage Analyzer**: Complete APFS disk breakdown with top 25 largest files and instant Quick-Trash.
+                • 🛡️ **Full System Audit**: Multi-engine diagnostic health check of your entire storage in one tap.
+
+                All file operations are 100% reversible via the Rollback Ledger.
+                """
+            )
+        }
+
+        // 5. Antivirus / Malware / Security inquiries
+        if isSecurityOrVirusQuery(lower) {
+            return .messageOnly(
+                "macOS has built-in kernel-level security (XProtect and Gatekeeper) for malware protection. While MacGuard is not an antivirus signature scanner, I can scan your storage for leftover cache junk, failed downloads (.crdownload), or Windows artifacts ($RECYCLE.BIN, desktop.ini). Would you like to run a Safe Cleanup or Storage Analysis?"
+            )
+        }
+
+        // 6. Audio / Creator Asset Queries
+        if isCreatorOrAudioQuery(lower) {
+            return .messageOnly(
+                "I specialize in creator workflows! I recognize DaVinci Resolve templates (.drfx), Blender 3D models (.blend), Adobe plugins (.zxp, .ccx), AI skills (.skill), and voice recordings (.opus, .wav like 'The Long Pier' audio tracks). When organizing, I group them neatly into 'Design & 3D Assets' and 'Media & Entertainment'."
+            )
+        }
+
+        // 7. Mac performance / Speed up
+        if isPerformanceQuery(lower) {
+            return .messageOnly(
+                "To optimize performance and free memory, I can clean developer build caches (Xcode DerivedData, CocoaPods, NPM), system logs, and clear out unneeded installers. Would you like me to run a Safe Cleanup?"
+            )
+        }
+
+        // 8. Full system audit / comprehensive optimization request
         if isFullAuditQuery(lower) {
             let summary = MacGuardAIEngine.shared.buildFullAuditSummary()
             let msg = "Comprehensive Mac audit complete. Discovered \(summary.formattedReclaimable) in reclaimable storage across system caches, installers, and duplicate files."
             return .fullAudit(message: msg, summary: summary)
         }
 
-        // 4. Safe cache, junk, temporary files, and unnecessary space cleanup
+        // 9. Safe cache, junk, temporary files, and unnecessary space cleanup
         if isCleanupQuery(lower) {
             let candidates = CleanupEngine.shared.discoverCleanupCandidates()
             let total = candidates.reduce(0) { $0 + $1.size }
@@ -43,14 +86,14 @@ public final class StandaloneAIEngine: Sendable {
             return .cleanupPlan(message: msg, candidates: candidates)
         }
 
-        // 5. Large files & storage consumption analysis
+        // 10. Large files & storage consumption analysis
         if isStorageOrLargeFilesQuery(lower) {
             let overview = StorageAnalyzer.shared.analyzeStorage()
             let msg = "APFS Macintosh HD: \(overview.formattedAvailable) available out of \(overview.formattedTotal) total capacity. Top usage: \(overview.largestFiles.count) largest files indexed."
             return .storageAnalysis(message: msg, overview: overview)
         }
 
-        // 6. Cryptographic duplicate detection
+        // 11. Cryptographic duplicate detection
         if isDuplicateQuery(lower) {
             let dups = (try? SystemScanner.shared.findDuplicates(in: targetDirectory, minFileSize: 512)) ?? []
             let totalWasted = dups.reduce(0) { $0 + $1.totalWastedSpace }
@@ -59,17 +102,49 @@ public final class StandaloneAIEngine: Sendable {
             return .duplicatePlan(message: msg, duplicates: dups)
         }
 
-        // 7. Structured file organization
+        // 12. Structured file organization & folder consolidation
         if isOrganizationQuery(lower) {
             let proposals = (try? FileOrganizer.shared.planOrganization(for: targetDirectory)) ?? []
-            let msg = "Analyzed \(targetDirectory.lastPathComponent) and identified \(proposals.count) files ready for structured categorization."
-            return .organizationPlan(message: msg, proposals: proposals)
+            let folderMerges = FileOrganizer.shared.planFolderConsolidation(for: targetDirectory)
+
+            var msg = "Analyzed \(targetDirectory.lastPathComponent): \(proposals.count) loose files ready for categorization"
+            if !folderMerges.isEmpty {
+                msg += ", and \(folderMerges.count) redundant subfolders ready for consolidation."
+            } else {
+                msg += "."
+            }
+            return .organizationPlan(message: msg, proposals: proposals, folderMerges: folderMerges)
         }
 
-        // 8. Helpful fallback with specific capabilities
+        // 13. Dynamic contextual fallback
         return .messageOnly(
-            "I can optimize your Mac by organizing your \(targetDirectory.lastPathComponent) folder, finding exact duplicate files with SHA-256, safely cleaning developer caches, or analyzing APFS storage consumption. Try asking 'Show largest files', 'Find unnecessary files', or 'full audit'."
+            "I'm ready to maintain your Mac. You can ask me to 'Organize Downloads' (to group files & merge duplicate folders), 'Clean Caches' (to reclaim disk space), 'Find Duplicates' (via SHA-256), or run a 'Full System Audit'."
         )
+    }
+
+    private func isGreeting(_ text: String) -> Bool {
+        let greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "yo", "sup", "greetings"]
+        return greetings.contains { text == $0 || text.hasPrefix($0 + " ") || text.hasSuffix(" " + $0) }
+    }
+
+    private func isHelpQuery(_ text: String) -> Bool {
+        let triggers = ["what can you do", "help", "features", "commands", "how does this work", "options", "what do you do", "capabilities"]
+        return triggers.contains { text.contains($0) }
+    }
+
+    private func isSecurityOrVirusQuery(_ text: String) -> Bool {
+        let triggers = ["virus", "antivirus", "malware", "scan for virus", "scan for viruses", "security check", "infected", "protect"]
+        return triggers.contains { text.contains($0) }
+    }
+
+    private func isCreatorOrAudioQuery(_ text: String) -> Bool {
+        let triggers = ["audio", "voice note", "voice notes", "the long pier", "davinci", "drfx", "blend", "blender", "opus", "whatsapp audio", "dialogue", "narrator"]
+        return triggers.contains { text.contains($0) }
+    }
+
+    private func isPerformanceQuery(_ text: String) -> Bool {
+        let triggers = ["slow", "speed up", "lag", "laggy", "ram", "memory", "performance", "boost"]
+        return triggers.contains { text.contains($0) }
     }
 
     private func isFullAuditQuery(_ text: String) -> Bool {
@@ -112,7 +187,8 @@ public final class StandaloneAIEngine: Sendable {
     private func isOrganizationQuery(_ text: String) -> Bool {
         let triggers = [
             "organize", "sort", "clean up downloads", "group files",
-            "tidy", "categorize", "arrange", "structure"
+            "tidy", "categorize", "arrange", "structure", "consolidate",
+            "too many folders", "merge folders", "duplicate folders", "clean folders"
         ]
         return triggers.contains { text.contains($0) }
     }

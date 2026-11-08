@@ -179,10 +179,14 @@ public struct StorageView: View {
         case .archives: return .yellow
         case .documents: return .blue
         case .media: return .purple
+        case .creative: return .indigo
+        case .skills: return .mint
+        case .academics: return .teal
         case .images: return .pink
         case .code: return .cyan
         case .caches: return .red
-        case .other: return .gray
+        case .junk: return .gray
+        case .other: return .secondary
         }
     }
 }

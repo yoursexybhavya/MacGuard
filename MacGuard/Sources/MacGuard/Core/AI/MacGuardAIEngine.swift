@@ -6,6 +6,7 @@ public struct FullAuditSummary: Sendable {
     public let cleanupCandidates: [CleanupTarget]
     public let duplicates: [DuplicateGroup]
     public let unorganizedFilesCount: Int
+    public let folderMergesCount: Int
     public let totalReclaimable: Int64
 
     public var formattedReclaimable: String {
@@ -16,12 +17,14 @@ public struct FullAuditSummary: Sendable {
         storage: StorageOverview,
         cleanupCandidates: [CleanupTarget],
         duplicates: [DuplicateGroup],
-        unorganizedFilesCount: Int
+        unorganizedFilesCount: Int,
+        folderMergesCount: Int = 0
     ) {
         self.storage = storage
         self.cleanupCandidates = cleanupCandidates
         self.duplicates = duplicates
         self.unorganizedFilesCount = unorganizedFilesCount
+        self.folderMergesCount = folderMergesCount
 
         let cleanupTotal = cleanupCandidates.reduce(0) { $0 + $1.size }
         let dupTotal = duplicates.reduce(0) { $0 + $1.totalWastedSpace }
@@ -31,7 +34,7 @@ public struct FullAuditSummary: Sendable {
 
 public enum AIExecutionResult: Sendable {
     case messageOnly(String)
-    case organizationPlan(message: String, proposals: [OrganizationProposal])
+    case organizationPlan(message: String, proposals: [OrganizationProposal], folderMerges: [FolderMergeProposal])
     case cleanupPlan(message: String, candidates: [CleanupTarget])
     case duplicatePlan(message: String, duplicates: [DuplicateGroup])
     case storageAnalysis(message: String, overview: StorageOverview)
@@ -43,32 +46,32 @@ public final class MacGuardAIEngine: Sendable {
     private static let logger = Logger(subsystem: "com.macguard", category: "MacGuardAIEngine")
 
     private let systemPrompt = """
-    You are MACGUARD AI, a specialized, privacy-first local assistant for macOS system maintenance, file organization, and storage optimization.
+    You are MACGUARD AI, an expert, privacy-first local assistant for macOS system maintenance, file organization, and storage optimization.
     You run locally on Apple Silicon.
 
     RULES:
-    1. Your responsibility is STRICTLY limited to:
+    1. Your primary responsibility is:
        - Full system maintenance audits and health checks ("action": "full_audit").
-       - Organizing files in Downloads, Documents, Desktop ("action": "organize_folder").
-       - Finding storage bottlenecks and large files ("action": "analyze_storage").
+       - Organizing loose files and merging redundant folders ("action": "organize_folder").
+       - Finding storage bottlenecks, large files, and APFS usage ("action": "analyze_storage").
        - Cleaning caches, disposable installers, junk, and temporary files ("action": "cleanup_caches").
        - Finding duplicate files ("action": "find_duplicates").
-    2. If the user asks for "full", "audit", "system scan", "optimize my mac", or "check everything", trigger "action": "full_audit".
-    3. If the user asks about "largest files", "space", or "storage", trigger "action": "analyze_storage".
-    4. If the user asks for "unnecessary files", "clean", "cache", or "free up space", trigger "action": "cleanup_caches".
-    5. If the user asks general questions unrelated to macOS maintenance, politely decline and state your specialization.
-    6. You must NEVER output shell commands or code to execute.
-    7. You MUST always output a single valid JSON object conforming to:
+    2. When the user asks general questions, greets you, or asks what you can do, provide an intelligent, friendly conversational answer explaining your capabilities clearly with zero canned repetition. Set "toolCall": null.
+    3. If the user asks for "full", "audit", "system scan", "optimize my mac", or "check everything", trigger "action": "full_audit".
+    4. If the user asks about "largest files", "space", or "storage", trigger "action": "analyze_storage".
+    5. If the user asks for "unnecessary files", "clean", "cache", or "free up space", trigger "action": "cleanup_caches".
+    6. If the user asks to organize files or clean up folders, trigger "action": "organize_folder".
+    7. Output a single valid JSON object:
        {
-         "message": "Human-friendly explanation of what was found or what action is proposed.",
+         "message": "Human-friendly explanation or conversational answer.",
          "confidence": 1.0,
          "toolCall": {
            "action": "full_audit" | "organize_folder" | "cleanup_caches" | "find_duplicates" | "analyze_storage" | "scan_directory",
-           "targetPath": "optional path e.g. ~/Downloads or ~/Documents",
-           "reasoning": "Why this operation is recommended"
+           "targetPath": "optional path",
+           "reasoning": "Why this action is proposed"
          }
        }
-       If no tool is needed, set "toolCall": null.
+       If no tool is required, set "toolCall": null.
     """
 
     private init() {}
@@ -80,7 +83,7 @@ public final class MacGuardAIEngine: Sendable {
             return .messageOnly("Please enter a maintenance request or question regarding your MacBook.")
         }
 
-        // 1. Check if Ollama daemon is active and responsive with macguard-ai
+        // 1. Check if Ollama daemon is active with macguard-ai
         let ollama = OllamaService.shared
         if await ollama.isServiceAvailable() {
             do {
@@ -89,6 +92,9 @@ public final class MacGuardAIEngine: Sendable {
                    let response = try? JSONDecoder().decode(MacGuardResponse.self, from: data) {
                     if let tool = response.toolCall {
                         return executeDispatchedTool(tool: tool, message: response.message)
+                    } else if !response.message.isEmpty {
+                        // CRITICAL: When the LLM answers a question or greets, return its answer directly!
+                        return .messageOnly(response.message)
                     }
                 }
             } catch {
@@ -96,7 +102,7 @@ public final class MacGuardAIEngine: Sendable {
             }
         }
 
-        // 2. High-speed, 0 MB idle RAM native Standalone Engine
+        // 2. High-speed, 0 MB idle RAM native Standalone Engine with rich conversational reasoning
         return await StandaloneAIEngine.shared.analyzeQuery(trimmed)
     }
 
@@ -116,7 +122,8 @@ public final class MacGuardAIEngine: Sendable {
 
         case .organizeFolder:
             let proposals = (try? FileOrganizer.shared.planOrganization(for: targetURL)) ?? []
-            return .organizationPlan(message: message, proposals: proposals)
+            let folderMerges = FileOrganizer.shared.planFolderConsolidation(for: targetURL)
+            return .organizationPlan(message: message, proposals: proposals, folderMerges: folderMerges)
 
         case .cleanupCaches:
             let targets = CleanupEngine.shared.discoverCleanupCandidates()
@@ -139,12 +146,14 @@ public final class MacGuardAIEngine: Sendable {
         let downloads = home.appendingPathComponent("Downloads")
         let duplicates = (try? SystemScanner.shared.findDuplicates(in: downloads, minFileSize: 512)) ?? []
         let proposals = (try? FileOrganizer.shared.planOrganization(for: downloads)) ?? []
+        let folderMerges = FileOrganizer.shared.planFolderConsolidation(for: downloads)
 
         return FullAuditSummary(
             storage: storage,
             cleanupCandidates: cleanups,
             duplicates: duplicates,
-            unorganizedFilesCount: proposals.count
+            unorganizedFilesCount: proposals.count,
+            folderMergesCount: folderMerges.count
         )
     }
 }

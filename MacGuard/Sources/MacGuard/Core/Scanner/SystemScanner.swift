@@ -34,9 +34,13 @@ public enum FileCategory: String, CaseIterable, Codable, Sendable {
     case archives = "Compressed Archives"
     case documents = "Documents & Text"
     case media = "Audio & Video"
+    case creative = "Design & 3D Assets"
+    case skills = "AI Skills & Workflows"
+    case academics = "Academics & College"
     case images = "Images & Photos"
     case code = "Code & Projects"
     case caches = "Caches & Logs"
+    case junk = "Junk & Artifacts"
     case other = "Other"
 
     public var systemIcon: String {
@@ -45,9 +49,13 @@ public enum FileCategory: String, CaseIterable, Codable, Sendable {
         case .archives: return "archivebox"
         case .documents: return "doc.text"
         case .media: return "film"
+        case .creative: return "cube.transparent"
+        case .skills: return "brain.head.profile"
+        case .academics: return "graduationcap.fill"
         case .images: return "photo"
         case .code: return "chevron.left.forwardslash.chevron.right"
         case .caches: return "trash"
+        case .junk: return "exclamationmark.trash"
         case .other: return "doc"
         }
     }
@@ -77,27 +85,62 @@ public final class SystemScanner: Sendable {
 
     /// Categorizes a file based on file extension and UniformTypeIdentifier
     public func categorize(url: URL) -> FileCategory {
+        let name = url.lastPathComponent.lowercased()
         let ext = url.pathExtension.lowercased()
 
+        // 1. Junk / Windows artifacts / failed downloads
+        if name == "desktop.ini" || name == "$recycle.bin" || name == "thumbs.db" || ext == "crdownload" || ext == "download" || ext == "part" {
+            return .junk
+        }
+
+        // 2. Creative & 3D & Video Editing Assets
+        if ["drfx", "blend", "zxp", "ccx", "aep", "prproj", "drp", "psd", "ai", "fig", "c4d", "obj", "fbx", "stl", "cube", "look"].contains(ext) {
+            return .creative
+        }
+
+        // 3. AI Skills & Agent specs
+        if ["skill", "agent", "prompt", "gguf", "safetensors", "onnx", "pt"].contains(ext) {
+            return .skills
+        }
+
+        // 4. Academics & College Notes (semantic filename check)
+        let academicKeywords = ["assignment", "cheatsheet", "syllabus", "exam", "jiet", "engineering", "bme", "college", "lecture", "coursework"]
+        if academicKeywords.contains(where: { name.contains($0) }) {
+            return .academics
+        }
+
+        // 5. Installers
         if ["dmg", "pkg", "iso", "appimage"].contains(ext) {
             return .installers
         }
+
+        // 6. Archives
         if ["zip", "tar", "gz", "bz2", "xz", "7z", "rar"].contains(ext) {
             return .archives
         }
+
+        // 7. Documents
         if ["pdf", "docx", "doc", "xlsx", "xls", "pptx", "ppt", "txt", "md", "csv", "pages", "numbers", "key"].contains(ext) {
             return .documents
         }
-        if ["mp4", "mov", "m4v", "mkv", "avi", "mp3", "m4a", "wav", "flac", "aac"].contains(ext) {
+
+        // 8. Media (including .opus, .ogg, .caf, .aiff)
+        if ["mp4", "mov", "m4v", "mkv", "avi", "webm", "mp3", "m4a", "wav", "flac", "aac", "opus", "ogg", "caf", "aiff"].contains(ext) {
             return .media
         }
+
+        // 9. Images
         if ["png", "jpg", "jpeg", "heic", "webp", "gif", "svg", "tiff", "bmp"].contains(ext) {
             return .images
         }
-        if ["swift", "py", "rs", "go", "js", "ts", "json", "yaml", "yml", "html", "css", "c", "cpp", "h"].contains(ext) {
+
+        // 10. Code
+        if ["swift", "py", "rs", "go", "js", "ts", "json", "yaml", "yml", "html", "css", "c", "cpp", "h", "sh"].contains(ext) {
             return .code
         }
-        if ["log", "cache", "tmp", "bak", "dSYM"].contains(ext) {
+
+        // 11. Caches
+        if ["log", "cache", "tmp", "bak", "dsym"].contains(ext) {
             return .caches
         }
 

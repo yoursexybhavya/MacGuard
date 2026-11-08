@@ -189,7 +189,7 @@ struct AIEngineTests {
     func testOrganizeRouting() async {
         let result = await aiEngine.processUserQuery("Organize my Downloads folder")
         switch result {
-        case .organizationPlan(let message, _):
+        case .organizationPlan(let message, _, _):
             #expect(!message.isEmpty)
         default:
             Issue.record("Expected organizationPlan for organization query")

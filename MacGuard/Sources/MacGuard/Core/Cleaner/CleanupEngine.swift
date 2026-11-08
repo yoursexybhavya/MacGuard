@@ -119,15 +119,26 @@ public final class CleanupEngine: Sendable {
         let downloads = homeURL.appendingPathComponent("Downloads")
         if fileManager.fileExists(atPath: downloads.path),
            let items = try? SystemScanner.shared.scanDirectory(at: downloads, recursive: false) {
-            for item in items where item.category == .installers {
-                targets.append(CleanupTarget(
-                    name: item.name,
-                    url: item.url,
-                    size: item.size,
-                    safetyTier: .reviewRecommended,
-                    category: "Old Installers",
-                    explanation: "Downloaded .dmg/.pkg installer that can usually be safely removed after software installation."
-                ))
+            for item in items {
+                if item.category == .installers {
+                    targets.append(CleanupTarget(
+                        name: item.name,
+                        url: item.url,
+                        size: item.size,
+                        safetyTier: .reviewRecommended,
+                        category: "Old Installers",
+                        explanation: "Downloaded .dmg/.pkg installer that can usually be safely removed after software installation."
+                    ))
+                } else if item.category == .junk {
+                    targets.append(CleanupTarget(
+                        name: item.name,
+                        url: item.url,
+                        size: item.size,
+                        safetyTier: .safe,
+                        category: "Incomplete & Artifacts",
+                        explanation: "Unfinished browser download (.crdownload) or Windows artifact ($RECYCLE.BIN, desktop.ini) safe to remove."
+                    ))
+                }
             }
         }
 
