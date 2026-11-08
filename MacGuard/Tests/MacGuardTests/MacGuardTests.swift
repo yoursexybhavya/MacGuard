@@ -127,6 +127,34 @@ struct FileOrganizerTests {
         #expect(installerProposal != nil)
         #expect(installerProposal?.proposedDestinationURL.path.contains("Installers") == true)
     }
+
+    @Test("Detects and proposes consolidation for redundant sibling folders")
+    func testFolderConsolidation() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let docsDir = tempDir.appendingPathComponent("Documents")
+        let docsNotesDir = tempDir.appendingPathComponent("Documents & Notes")
+        let mediaDir = tempDir.appendingPathComponent("Media")
+        let mediaEntDir = tempDir.appendingPathComponent("Media & Entertainment")
+
+        try FileManager.default.createDirectory(at: docsDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: docsNotesDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: mediaDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: mediaEntDir, withIntermediateDirectories: true)
+
+        let file1 = docsDir.appendingPathComponent("report.pdf")
+        let file2 = mediaDir.appendingPathComponent("clip.mp4")
+        try "test".write(to: file1, atomically: true, encoding: .utf8)
+        try "test".write(to: file2, atomically: true, encoding: .utf8)
+
+        let organizer = FileOrganizer.shared
+        let merges = organizer.planFolderConsolidation(for: tempDir)
+        #expect(merges.count >= 2)
+        #expect(merges.contains { $0.sourceName == "Documents" && $0.destinationName == "Documents & Notes" })
+        #expect(merges.contains { $0.sourceName == "Media" && $0.destinationName == "Media & Entertainment" })
+    }
 }
 
 @Suite("Rollback Ledger & Reversibility Tests")
@@ -239,6 +267,52 @@ struct AIEngineTests {
             #expect(summary.storage.totalCapacity > 0)
         default:
             Issue.record("Expected fullAudit for 'full' command")
+        }
+    }
+
+    @Test("Conversational greeting responds naturally without repetitive fallback")
+    func testGreeting() async {
+        let result = await StandaloneAIEngine.shared.analyzeQuery("hi")
+        switch result {
+        case .messageOnly(let text):
+            #expect(text.contains("Hello") || text.contains("Ready"))
+            #expect(!text.contains("I can optimize your Mac by organizing your Downloads folder, finding exact duplicate files with SHA-256"))
+        default:
+            Issue.record("Expected messageOnly for greeting")
+        }
+    }
+
+    @Test("Conversational help explains specific capabilities clearly")
+    func testHelp() async {
+        let result = await StandaloneAIEngine.shared.analyzeQuery("what can you do")
+        switch result {
+        case .messageOnly(let text):
+            #expect(text.contains("Organizer") || text.contains("File"))
+            #expect(text.contains("Cleanup") || text.contains("Duplicate"))
+        default:
+            Issue.record("Expected messageOnly for help query")
+        }
+    }
+
+    @Test("Security query explains macOS native protections")
+    func testSecurityQuery() async {
+        let result = await StandaloneAIEngine.shared.analyzeQuery("scan my pc for viruses")
+        switch result {
+        case .messageOnly(let text):
+            #expect(text.contains("XProtect") || text.contains("Gatekeeper") || text.contains("macOS"))
+        default:
+            Issue.record("Expected messageOnly for virus query")
+        }
+    }
+
+    @Test("Creator query recognizes audio narration and project assets")
+    func testAudioCreatorQuery() async {
+        let result = await StandaloneAIEngine.shared.analyzeQuery("What is that audio narration file in Downloads?")
+        switch result {
+        case .messageOnly(let text):
+            #expect(text.contains("audio") || text.contains("Long Pier") || text.contains("narration") || text.contains("voice"))
+        default:
+            Issue.record("Expected messageOnly for audio creator query")
         }
     }
 }
