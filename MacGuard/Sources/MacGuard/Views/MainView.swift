@@ -45,7 +45,11 @@ public struct MainView: View {
                         }
                     })
                 case .assistant:
-                    AssistantView()
+                    AssistantView(onNavigate: { section in
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                            selectedSection = section
+                        }
+                    })
                 case .storage:
                     StorageView()
                 case .duplicates:

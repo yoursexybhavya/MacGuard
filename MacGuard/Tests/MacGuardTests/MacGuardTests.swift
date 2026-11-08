@@ -206,5 +206,40 @@ struct AIEngineTests {
             Issue.record("Expected cleanupPlan for cache cleaning query")
         }
     }
+
+    @Test("Correctly routes unnecessary space query to cleanup engine")
+    func testUnnecessaryFilesRouting() async {
+        let result = await aiEngine.processUserQuery("Find unnecessary files taking up space")
+        switch result {
+        case .cleanupPlan(let message, _):
+            #expect(!message.isEmpty)
+        default:
+            Issue.record("Expected cleanupPlan for 'Find unnecessary files taking up space'")
+        }
+    }
+
+    @Test("Correctly routes largest files query to storage analysis")
+    func testLargestFilesRouting() async {
+        let result = await aiEngine.processUserQuery("Show me the largest files on my Mac")
+        switch result {
+        case .storageAnalysis(let message, let overview):
+            #expect(!message.isEmpty)
+            #expect(overview.totalCapacity > 0)
+        default:
+            Issue.record("Expected storageAnalysis for 'Show me the largest files on my Mac'")
+        }
+    }
+
+    @Test("Correctly routes 'full' query to comprehensive system audit")
+    func testFullAuditRouting() async {
+        let result = await aiEngine.processUserQuery("full")
+        switch result {
+        case .fullAudit(let message, let summary):
+            #expect(!message.isEmpty)
+            #expect(summary.storage.totalCapacity > 0)
+        default:
+            Issue.record("Expected fullAudit for 'full' command")
+        }
+    }
 }
 

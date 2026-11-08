@@ -1,12 +1,41 @@
 import Foundation
 import os
 
+public struct FullAuditSummary: Sendable {
+    public let storage: StorageOverview
+    public let cleanupCandidates: [CleanupTarget]
+    public let duplicates: [DuplicateGroup]
+    public let unorganizedFilesCount: Int
+    public let totalReclaimable: Int64
+
+    public var formattedReclaimable: String {
+        ByteCountFormatter.string(fromByteCount: totalReclaimable, countStyle: .file)
+    }
+
+    public init(
+        storage: StorageOverview,
+        cleanupCandidates: [CleanupTarget],
+        duplicates: [DuplicateGroup],
+        unorganizedFilesCount: Int
+    ) {
+        self.storage = storage
+        self.cleanupCandidates = cleanupCandidates
+        self.duplicates = duplicates
+        self.unorganizedFilesCount = unorganizedFilesCount
+
+        let cleanupTotal = cleanupCandidates.reduce(0) { $0 + $1.size }
+        let dupTotal = duplicates.reduce(0) { $0 + $1.totalWastedSpace }
+        self.totalReclaimable = cleanupTotal + dupTotal
+    }
+}
+
 public enum AIExecutionResult: Sendable {
     case messageOnly(String)
     case organizationPlan(message: String, proposals: [OrganizationProposal])
     case cleanupPlan(message: String, candidates: [CleanupTarget])
     case duplicatePlan(message: String, duplicates: [DuplicateGroup])
     case storageAnalysis(message: String, overview: StorageOverview)
+    case fullAudit(message: String, summary: FullAuditSummary)
 }
 
 public final class MacGuardAIEngine: Sendable {
@@ -19,17 +48,22 @@ public final class MacGuardAIEngine: Sendable {
 
     RULES:
     1. Your responsibility is STRICTLY limited to:
-       - Organizing files (Downloads, Documents, Desktop, Media).
-       - Finding storage bottlenecks, large files, and duplicates.
-       - Recommending safe cache and installer cleanups.
-    2. If the user asks general questions unrelated to macOS maintenance, politely decline and state your specialization.
-    3. You must NEVER output shell commands or code to execute.
-    4. You MUST always output a single valid JSON object conforming to:
+       - Full system maintenance audits and health checks ("action": "full_audit").
+       - Organizing files in Downloads, Documents, Desktop ("action": "organize_folder").
+       - Finding storage bottlenecks and large files ("action": "analyze_storage").
+       - Cleaning caches, disposable installers, junk, and temporary files ("action": "cleanup_caches").
+       - Finding duplicate files ("action": "find_duplicates").
+    2. If the user asks for "full", "audit", "system scan", "optimize my mac", or "check everything", trigger "action": "full_audit".
+    3. If the user asks about "largest files", "space", or "storage", trigger "action": "analyze_storage".
+    4. If the user asks for "unnecessary files", "clean", "cache", or "free up space", trigger "action": "cleanup_caches".
+    5. If the user asks general questions unrelated to macOS maintenance, politely decline and state your specialization.
+    6. You must NEVER output shell commands or code to execute.
+    7. You MUST always output a single valid JSON object conforming to:
        {
          "message": "Human-friendly explanation of what was found or what action is proposed.",
          "confidence": 1.0,
          "toolCall": {
-           "action": "organize_folder" | "cleanup_caches" | "find_duplicates" | "analyze_storage" | "scan_directory",
+           "action": "full_audit" | "organize_folder" | "cleanup_caches" | "find_duplicates" | "analyze_storage" | "scan_directory",
            "targetPath": "optional path e.g. ~/Downloads or ~/Documents",
            "reasoning": "Why this operation is recommended"
          }
@@ -41,91 +75,76 @@ public final class MacGuardAIEngine: Sendable {
 
     /// Processes a user natural language query and dispatches appropriate maintenance operations
     public func processUserQuery(_ query: String) async -> AIExecutionResult {
-        // 1. Primary: Run Standalone Offline Engine (0 MB idle RAM, no Ollama required)
-        let standaloneResult = await StandaloneAIEngine.shared.analyzeQuery(query)
-        
-        // 2. If a local Ollama daemon is optionally running, we can check for deep reasoning,
-        // but Ollama is NEVER required for offline maintenance or execution.
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return .messageOnly("Please enter a maintenance request or question regarding your MacBook.")
+        }
+
+        // 1. Check if Ollama daemon is active and responsive with macguard-ai
         let ollama = OllamaService.shared
         if await ollama.isServiceAvailable() {
             do {
-                let jsonString = try await ollama.generateJSON(prompt: query, systemPrompt: systemPrompt)
+                let jsonString = try await ollama.generateJSON(prompt: trimmed, systemPrompt: systemPrompt)
                 if let data = jsonString.data(using: .utf8),
                    let response = try? JSONDecoder().decode(MacGuardResponse.self, from: data) {
-                    return executeDispatchedTool(response: response, originalQuery: query)
+                    if let tool = response.toolCall {
+                        return executeDispatchedTool(tool: tool, message: response.message)
+                    }
                 }
             } catch {
-                Self.logger.debug("Optional Ollama call returned error, using standalone offline engine result: \(error.localizedDescription, privacy: .public)")
+                Self.logger.debug("Ollama inference bypassed, falling back to standalone engine: \(error.localizedDescription, privacy: .public)")
             }
         }
 
-        return standaloneResult
+        // 2. High-speed, 0 MB idle RAM native Standalone Engine
+        return await StandaloneAIEngine.shared.analyzeQuery(trimmed)
     }
 
-    private func executeDispatchedTool(response: MacGuardResponse, originalQuery: String) -> AIExecutionResult {
-        guard let tool = response.toolCall else {
-            return .messageOnly(response.message)
-        }
-
+    private func executeDispatchedTool(tool: ToolCallPayload, message: String) -> AIExecutionResult {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let targetURL: URL
-        if let path = tool.targetPath {
+        if let path = tool.targetPath, !path.isEmpty {
             targetURL = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
         } else {
             targetURL = home.appendingPathComponent("Downloads")
         }
 
         switch tool.action {
+        case .fullAudit:
+            let summary = buildFullAuditSummary()
+            return .fullAudit(message: message, summary: summary)
+
         case .organizeFolder:
             let proposals = (try? FileOrganizer.shared.planOrganization(for: targetURL)) ?? []
-            return .organizationPlan(message: response.message, proposals: proposals)
+            return .organizationPlan(message: message, proposals: proposals)
 
         case .cleanupCaches:
             let targets = CleanupEngine.shared.discoverCleanupCandidates()
-            return .cleanupPlan(message: response.message, candidates: targets)
+            return .cleanupPlan(message: message, candidates: targets)
 
         case .findDuplicates:
-            let dups = (try? SystemScanner.shared.findDuplicates(in: targetURL)) ?? []
-            return .duplicatePlan(message: response.message, duplicates: dups)
+            let dups = (try? SystemScanner.shared.findDuplicates(in: targetURL, minFileSize: 512)) ?? []
+            return .duplicatePlan(message: message, duplicates: dups)
 
         case .analyzeStorage, .scanDirectory:
             let overview = StorageAnalyzer.shared.analyzeStorage()
-            return .storageAnalysis(message: response.message, overview: overview)
+            return .storageAnalysis(message: message, overview: overview)
         }
     }
 
-    private func executeHeuristicFallback(query: String) -> AIExecutionResult {
-        let lower = query.lowercased()
+    public func buildFullAuditSummary() -> FullAuditSummary {
         let home = FileManager.default.homeDirectoryForCurrentUser
+        let storage = StorageAnalyzer.shared.analyzeStorage()
+        let cleanups = CleanupEngine.shared.discoverCleanupCandidates()
+        let downloads = home.appendingPathComponent("Downloads")
+        let duplicates = (try? SystemScanner.shared.findDuplicates(in: downloads, minFileSize: 512)) ?? []
+        let proposals = (try? FileOrganizer.shared.planOrganization(for: downloads)) ?? []
 
-        if lower.contains("organize") || lower.contains("sort") {
-            let target = lower.contains("document") ? home.appendingPathComponent("Documents") : home.appendingPathComponent("Downloads")
-            let proposals = (try? FileOrganizer.shared.planOrganization(for: target)) ?? []
-            return .organizationPlan(
-                message: "I analyzed '\(target.lastPathComponent)' and formulated a tidy organization structure grouping files by category.",
-                proposals: proposals
-            )
-        } else if lower.contains("clean") || lower.contains("cache") || lower.contains("free up") || lower.contains("temp") {
-            let candidates = CleanupEngine.shared.discoverCleanupCandidates()
-            return .cleanupPlan(
-                message: "I discovered safe cleanup candidates across your user caches, logs, and downloads.",
-                candidates: candidates
-            )
-        } else if lower.contains("duplicate") || lower.contains("same file") {
-            let target = home.appendingPathComponent("Downloads")
-            let dups = (try? SystemScanner.shared.findDuplicates(in: target)) ?? []
-            return .duplicatePlan(
-                message: "I ran a multi-pass cryptographic scan and identified duplicate files.",
-                duplicates: dups
-            )
-        } else if lower.contains("storage") || lower.contains("large") || lower.contains("space") || lower.contains("disk") {
-            let overview = StorageAnalyzer.shared.analyzeStorage()
-            return .storageAnalysis(
-                message: "Here is the comprehensive storage breakdown for your Mac.",
-                overview: overview
-            )
-        } else {
-            return .messageOnly("I am MacGuard, specialized for macOS storage maintenance, file organization, and system optimization. You can ask me to organize your Downloads, clean system caches, find duplicate files, or analyze your disk space.")
-        }
+        return FullAuditSummary(
+            storage: storage,
+            cleanupCandidates: cleanups,
+            duplicates: duplicates,
+            unorganizedFilesCount: proposals.count
+        )
     }
 }

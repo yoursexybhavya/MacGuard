@@ -1,4 +1,22 @@
 import SwiftUI
+import AppKit
+
+public enum AssistantActiveSheet: Identifiable {
+    case organization([OrganizationProposal])
+    case cleanup([CleanupTarget])
+    case duplicates([DuplicateGroup])
+
+    public var id: String {
+        switch self {
+        case .organization(let items):
+            return "org_\(items.count)_\(items.first?.id.uuidString ?? "empty")"
+        case .cleanup(let items):
+            return "clean_\(items.count)_\(items.first?.id.uuidString ?? "empty")"
+        case .duplicates(let items):
+            return "dup_\(items.count)_\(items.first?.id ?? "empty")"
+        }
+    }
+}
 
 public struct ChatMessage: Identifiable, Sendable {
     public let id: UUID
@@ -17,24 +35,26 @@ public struct ChatMessage: Identifiable, Sendable {
 }
 
 public struct AssistantView: View {
+    public var onNavigate: ((NavigationSection) -> Void)?
+
     @State private var messages: [ChatMessage] = [
         ChatMessage(
             isUser: false,
-            text: "Hello! I am MacGuard, your specialized local maintenance assistant. Ask me to organize your Downloads, find duplicate files, clean temporary caches, or analyze your disk space."
+            text: "Hello! I am MacGuard, your specialized local maintenance assistant. Ask me to organize your Downloads, find duplicate files, clean temporary caches, analyze disk space, or run a full system audit."
         )
     ]
     @State private var currentInput: String = ""
     @State private var isProcessing: Bool = false
-    @State private var pendingProposals: [OrganizationProposal] = []
-    @State private var pendingCleanups: [CleanupTarget] = []
-    @State private var showApprovalSheet: Bool = false
-    @State private var approvalType: String = ""
+    @State private var activeSheet: AssistantActiveSheet? = nil
+    @State private var trashedFileNotification: String? = nil
 
-    public init() {}
+    public init(onNavigate: ((NavigationSection) -> Void)? = nil) {
+        self.onNavigate = onNavigate
+    }
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Header
+            // Header Bar
             HStack {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
@@ -52,6 +72,26 @@ public struct AssistantView: View {
             .padding(.vertical, 12)
             .background(Color.secondary.opacity(0.05))
 
+            if let notification = trashedFileNotification {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text(notification)
+                        .font(.system(size: 12))
+                    Spacer()
+                    Button {
+                        trashedFileNotification = nil
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.green.opacity(0.12))
+            }
+
             Divider()
 
             // Chat Messages Scroll
@@ -61,24 +101,30 @@ public struct AssistantView: View {
                         ForEach(messages) { msg in
                             ChatBubbleView(
                                 message: msg,
-                                onApproveOrganization: { proposals in
-                                    self.pendingProposals = proposals
-                                    self.approvalType = "organization"
-                                    self.showApprovalSheet = true
+                                onOpenOrganizationSheet: { proposals in
+                                    self.activeSheet = .organization(proposals)
                                 },
-                                onApproveCleanup: { cleanups in
-                                    self.pendingCleanups = cleanups
-                                    self.approvalType = "cleanup"
-                                    self.showApprovalSheet = true
+                                onOpenCleanupSheet: { cleanups in
+                                    self.activeSheet = .cleanup(cleanups)
+                                },
+                                onOpenDuplicateSheet: { duplicates in
+                                    self.activeSheet = .duplicates(duplicates)
+                                },
+                                onTrashFile: { item in
+                                    trashSingleFile(item)
+                                },
+                                onNavigate: onNavigate,
+                                onTriggerPrompt: { prompt in
+                                    sendQuery(prompt)
                                 }
                             )
                         }
 
                         if isProcessing {
-                            HStack(spacing: 8) {
+                            HStack(spacing: 10) {
                                 ProgressView()
                                     .scaleEffect(0.8)
-                                Text("Analyzing filesystem...")
+                                Text("Analyzing filesystem and running neural intent dispatch...")
                                     .font(.system(size: 12))
                                     .foregroundColor(.secondary)
                                 Spacer()
@@ -100,20 +146,23 @@ public struct AssistantView: View {
 
             Divider()
 
-            // Suggested Prompts
+            // Suggested Action Chips
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    SuggestionChip(text: "Organize my Downloads folder") {
+                    SuggestionChip(icon: "folder.badge.gearshape", text: "Organize my Downloads folder") {
                         sendQuery("Organize my Downloads folder")
                     }
-                    SuggestionChip(text: "Find unnecessary files taking up space") {
+                    SuggestionChip(icon: "trash", text: "Find unnecessary files taking up space") {
                         sendQuery("Find unnecessary files taking up space")
                     }
-                    SuggestionChip(text: "Find duplicate files") {
+                    SuggestionChip(icon: "chart.bar.xaxis", text: "Show largest files on my Mac") {
+                        sendQuery("Show me the largest files on my Mac")
+                    }
+                    SuggestionChip(icon: "doc.on.doc", text: "Find duplicate files") {
                         sendQuery("Find duplicate files")
                     }
-                    SuggestionChip(text: "Show largest files on my Mac") {
-                        sendQuery("Show me the largest files on my Mac")
+                    SuggestionChip(icon: "shield.checkered", text: "Full system audit") {
+                        sendQuery("full")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -145,29 +194,69 @@ public struct AssistantView: View {
             .padding(14)
             .background(Color.secondary.opacity(0.04))
         }
-        .sheet(isPresented: $showApprovalSheet) {
-            if approvalType == "organization" {
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .organization(let proposals):
                 OrganizationApprovalSheet(
-                    proposals: pendingProposals,
-                    onApprove: {
-                        try? FileOrganizer.shared.executeProposals(pendingProposals)
-                        messages.append(ChatMessage(isUser: false, text: "Successfully organized \(pendingProposals.count) files. All changes recorded in the Rollback Ledger."))
-                        showApprovalSheet = false
+                    proposals: proposals,
+                    onApprove: { approvedProposals in
+                        do {
+                            try FileOrganizer.shared.executeProposals(approvedProposals)
+                            messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Successfully organized \(approvedProposals.count) files into categorized folders. All changes are recorded in the Rollback Ledger."
+                            ))
+                        } catch {
+                            messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Encountered an issue during organization: \(error.localizedDescription)"
+                            ))
+                        }
+                        activeSheet = nil
                     },
                     onCancel: {
-                        showApprovalSheet = false
+                        activeSheet = nil
                     }
                 )
-            } else {
+
+            case .cleanup(let targets):
                 CleanupApprovalSheet(
-                    targets: pendingCleanups,
-                    onApprove: {
-                        try? CleanupEngine.shared.executeCleanup(targets: pendingCleanups)
-                        messages.append(ChatMessage(isUser: false, text: "Safely moved \(pendingCleanups.count) items to macOS Trash. You can undo this anytime from the Rollback Ledger."))
-                        showApprovalSheet = false
+                    targets: targets,
+                    onApprove: { approvedTargets in
+                        do {
+                            let totalSize = approvedTargets.reduce(0) { $0 + $1.size }
+                            let formatted = ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
+                            try CleanupEngine.shared.executeCleanup(targets: approvedTargets)
+                            messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Safely moved \(approvedTargets.count) items (\(formatted)) to macOS Trash. You can undo this anytime from Approvals & History."
+                            ))
+                        } catch {
+                            messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Cleanup error: \(error.localizedDescription)"
+                            ))
+                        }
+                        activeSheet = nil
                     },
                     onCancel: {
-                        showApprovalSheet = false
+                        activeSheet = nil
+                    }
+                )
+
+            case .duplicates(let duplicates):
+                DuplicateApprovalSheet(
+                    duplicates: duplicates,
+                    onApprove: { removedCount, freedBytes in
+                        let formatted = ByteCountFormatter.string(fromByteCount: freedBytes, countStyle: .file)
+                        messages.append(ChatMessage(
+                            isUser: false,
+                            text: "Safely relocated \(removedCount) duplicate copies (\(formatted)) to macOS Trash. Originals were preserved intact."
+                        ))
+                        activeSheet = nil
+                    },
+                    onCancel: {
+                        activeSheet = nil
                     }
                 )
             }
@@ -199,17 +288,43 @@ public struct AssistantView: View {
                     messages.append(ChatMessage(isUser: false, text: msg, result: result))
                 case .storageAnalysis(let msg, _):
                     messages.append(ChatMessage(isUser: false, text: msg, result: result))
+                case .fullAudit(let msg, _):
+                    messages.append(ChatMessage(isUser: false, text: msg, result: result))
                 }
                 isProcessing = false
             }
         }
     }
+
+    private func trashSingleFile(_ item: ScannedItem) {
+        do {
+            try FileManager.default.trashItem(at: item.url, resultingItemURL: nil)
+            RollbackLedger.shared.recordOperation(OperationRecord(
+                actionType: .moveToTrash,
+                sourcePath: item.path,
+                fileSize: item.size,
+                reason: "User quick-trashed large file from AI Assistant: \(item.name)"
+            ))
+            withAnimation {
+                trashedFileNotification = "Safely moved '\(item.name)' to macOS Trash (\(item.formattedSize) freed)."
+            }
+        } catch {
+            withAnimation {
+                trashedFileNotification = "Failed to trash file: \(error.localizedDescription)"
+            }
+        }
+    }
 }
 
+// MARK: - Chat Bubble View
 struct ChatBubbleView: View {
     let message: ChatMessage
-    let onApproveOrganization: ([OrganizationProposal]) -> Void
-    let onApproveCleanup: ([CleanupTarget]) -> Void
+    let onOpenOrganizationSheet: ([OrganizationProposal]) -> Void
+    let onOpenCleanupSheet: ([CleanupTarget]) -> Void
+    let onOpenDuplicateSheet: ([DuplicateGroup]) -> Void
+    let onTrashFile: (ScannedItem) -> Void
+    let onNavigate: ((NavigationSection) -> Void)?
+    let onTriggerPrompt: (String) -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -229,35 +344,68 @@ struct ChatBubbleView: View {
                         .foregroundColor(.purple)
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 12) {
                     Text(message.text)
                         .font(.system(size: 13))
                         .foregroundColor(.primary)
 
-                    // Embedded Tool Action Cards
+                    // Embedded Interactive Action Cards
                     if let result = message.result {
                         switch result {
                         case .organizationPlan(_, let proposals):
                             if !proposals.isEmpty {
-                                ProposalActionCard(proposals: proposals, onApprove: {
-                                    onApproveOrganization(proposals)
-                                })
+                                ProposalActionCard(
+                                    proposals: proposals,
+                                    onReview: {
+                                        onOpenOrganizationSheet(proposals)
+                                    }
+                                )
                             }
 
                         case .cleanupPlan(_, let candidates):
                             if !candidates.isEmpty {
-                                CleanupActionCard(candidates: candidates, onApprove: {
-                                    onApproveCleanup(candidates)
-                                })
+                                CleanupActionCard(
+                                    candidates: candidates,
+                                    onReview: {
+                                        onOpenCleanupSheet(candidates)
+                                    }
+                                )
                             }
 
                         case .duplicatePlan(_, let duplicates):
                             if !duplicates.isEmpty {
-                                DuplicateActionCard(duplicates: duplicates)
+                                DuplicateActionCard(
+                                    duplicates: duplicates,
+                                    onReview: {
+                                        onOpenDuplicateSheet(duplicates)
+                                    }
+                                )
                             }
 
                         case .storageAnalysis(_, let overview):
-                            StorageActionCard(overview: overview)
+                            StorageActionCard(
+                                overview: overview,
+                                onTrashFile: onTrashFile,
+                                onNavigate: onNavigate,
+                                onCleanInstallers: {
+                                    onTriggerPrompt("Clean safe installers and temporary caches")
+                                }
+                            )
+
+                        case .fullAudit(_, let summary):
+                            FullAuditCard(
+                                summary: summary,
+                                onReviewCleanup: {
+                                    onOpenCleanupSheet(summary.cleanupCandidates)
+                                },
+                                onReviewDuplicates: {
+                                    onOpenDuplicateSheet(summary.duplicates)
+                                },
+                                onReviewOrganization: {
+                                    onTriggerPrompt("Organize my Downloads folder")
+                                },
+                                onNavigate: onNavigate
+                            )
 
                         case .messageOnly:
                             EmptyView()
@@ -273,9 +421,217 @@ struct ChatBubbleView: View {
     }
 }
 
+// MARK: - Storage Action Card (Large Files & Capacity)
+struct StorageActionCard: View {
+    let overview: StorageOverview
+    let onTrashFile: (ScannedItem) -> Void
+    let onNavigate: ((NavigationSection) -> Void)?
+    let onCleanInstallers: () -> Void
+
+    @State private var showAllFiles: Bool = false
+    @State private var fileToConfirmTrash: ScannedItem? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Volume Header & Free Space Bar
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: "internaldrive.fill")
+                            .foregroundColor(.blue)
+                        Text("Macintosh HD (APFS)")
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                    Spacer()
+                    Text("\(overview.formattedAvailable) Free")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.green)
+                    Text("of \(overview.formattedTotal)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                ProgressView(value: overview.usagePercentage)
+                    .tint(overview.usagePercentage > 0.85 ? .red : (overview.usagePercentage > 0.70 ? .orange : .blue))
+            }
+
+            // Category Distribution Pills
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(FileCategory.allCases, id: \.self) { cat in
+                        let bytes = overview.categoryBreakdown[cat] ?? 0
+                        if bytes > 0 {
+                            HStack(spacing: 4) {
+                                Image(systemName: cat.systemIcon)
+                                    .font(.system(size: 10))
+                                Text(cat.rawValue.components(separatedBy: " & ").first ?? cat.rawValue)
+                                    .font(.system(size: 10, weight: .medium))
+                                Text(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.secondary.opacity(0.08))
+                            .cornerRadius(6)
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Largest Files Section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "chart.bar.fill")
+                        .foregroundColor(.indigo)
+                    Text("Top Largest Files (\(overview.largestFiles.count) Indexed)")
+                        .font(.system(size: 12, weight: .bold))
+                    Spacer()
+                    Button(showAllFiles ? "Show Top 5" : "Show All \(overview.largestFiles.count)") {
+                        withAnimation {
+                            showAllFiles.toggle()
+                        }
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .buttonStyle(.plain)
+                    .foregroundColor(.blue)
+                }
+
+                let displayFiles = showAllFiles ? overview.largestFiles : Array(overview.largestFiles.prefix(5))
+
+                VStack(spacing: 6) {
+                    ForEach(displayFiles) { item in
+                        HStack(spacing: 10) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(categoryColor(for: item.category).opacity(0.15))
+                                    .frame(width: 28, height: 28)
+                                Image(systemName: item.category.systemIcon)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(categoryColor(for: item.category))
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.name)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .lineLimit(1)
+                                Text(item.path)
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+
+                            Spacer()
+
+                            Text(item.formattedSize)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.primary)
+
+                            // 1-Click Reveal in Finder
+                            Button {
+                                NSWorkspace.shared.activateFileViewerSelecting([item.url])
+                            } label: {
+                                Image(systemName: "arrow.up.forward.app")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.blue)
+                                    .padding(4)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Reveal in Finder")
+
+                            // 1-Click Move to Trash
+                            Button {
+                                fileToConfirmTrash = item
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.red.opacity(0.8))
+                                    .padding(4)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Move to Trash")
+                        }
+                        .padding(8)
+                        .background(Color.secondary.opacity(0.04))
+                        .cornerRadius(8)
+                    }
+                }
+            }
+
+            // Quick Actions Footer
+            HStack(spacing: 10) {
+                if let onNavigate = onNavigate {
+                    Button {
+                        onNavigate(.storage)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chart.pie.fill")
+                            Text("Open Storage Analyzer")
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+
+                Button(action: onCleanInstallers) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "trash.fill")
+                        Text("Clean Disposable Installers")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+                .controlSize(.small)
+            }
+            .padding(.top, 4)
+        }
+        .padding(14)
+        .background(Color.blue.opacity(0.04))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.blue.opacity(0.15), lineWidth: 1)
+        )
+        .confirmationDialog(
+            "Move '\(fileToConfirmTrash?.name ?? "")' to Trash?",
+            isPresented: Binding(
+                get: { fileToConfirmTrash != nil },
+                set: { if !$0 { fileToConfirmTrash = nil } }
+            ),
+            presenting: fileToConfirmTrash
+        ) { item in
+            Button("Move to Trash (\(item.formattedSize))", role: .destructive) {
+                onTrashFile(item)
+                fileToConfirmTrash = nil
+            }
+            Button("Cancel", role: .cancel) {
+                fileToConfirmTrash = nil
+            }
+        } message: { item in
+            Text("This file will be relocated to macOS Trash. This operation is recorded in the Rollback Ledger and can be undone.")
+        }
+    }
+
+    private func categoryColor(for cat: FileCategory) -> Color {
+        switch cat {
+        case .installers: return .orange
+        case .archives: return .purple
+        case .documents: return .blue
+        case .media: return .pink
+        case .images: return .teal
+        case .code: return .green
+        case .caches: return .yellow
+        case .other: return .gray
+        }
+    }
+}
+
+// MARK: - Proposal Action Card (File Organization)
 struct ProposalActionCard: View {
     let proposals: [OrganizationProposal]
-    let onApprove: () -> Void
+    let onReview: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -283,21 +639,64 @@ struct ProposalActionCard: View {
                 Image(systemName: "folder.badge.gearshape")
                     .foregroundColor(.blue)
                 Text("Proposed File Organization")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 13, weight: .bold))
                 Spacer()
                 Text("\(proposals.count) files")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.blue)
             }
 
-            Text("Files will be categorized into subfolders without overwriting existing files.")
+            Text("MacGuard will sort files into tidy category subfolders without overwriting existing files.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
 
-            Button(action: onApprove) {
+            // Category pills
+            let grouped = Dictionary(grouping: proposals, by: { $0.category })
+            HStack(spacing: 6) {
+                ForEach(Array(grouped.keys.prefix(4)), id: \.self) { cat in
+                    let count = grouped[cat]?.count ?? 0
+                    HStack(spacing: 3) {
+                        Image(systemName: cat.systemIcon)
+                            .font(.system(size: 9))
+                        Text("\(cat.rawValue.components(separatedBy: " & ").first ?? cat.rawValue): \(count)")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(4)
+                }
+            }
+
+            // Preview 3 files
+            VStack(spacing: 4) {
+                ForEach(proposals.prefix(3)) { p in
+                    HStack(spacing: 6) {
+                        Text(p.fileName)
+                            .font(.system(size: 11, weight: .semibold))
+                            .lineLimit(1)
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                        Text(p.proposedDestinationURL.lastPathComponent)
+                            .font(.system(size: 10))
+                            .foregroundColor(.blue)
+                        Spacer()
+                        Text(p.formattedSize)
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.secondary.opacity(0.04))
+                    .cornerRadius(4)
+                }
+            }
+
+            Button(action: onReview) {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
-                    Text("Review & Approve Plan")
+                    Text("Review & Approve Plan (\(proposals.count) files)")
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -305,14 +704,19 @@ struct ProposalActionCard: View {
             .controlSize(.small)
         }
         .padding(12)
-        .background(Color.blue.opacity(0.08))
+        .background(Color.blue.opacity(0.06))
         .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.blue.opacity(0.15), lineWidth: 1)
+        )
     }
 }
 
+// MARK: - Cleanup Action Card (Caches & Junk)
 struct CleanupActionCard: View {
     let candidates: [CleanupTarget]
-    let onApprove: () -> Void
+    let onReview: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -320,19 +724,40 @@ struct CleanupActionCard: View {
                 Image(systemName: "trash.fill")
                     .foregroundColor(.orange)
                 Text("Proposed Safe Cleanup")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 13, weight: .bold))
                 Spacer()
                 let total = candidates.reduce(0) { $0 + $1.size }
                 Text(ByteCountFormatter.string(fromByteCount: total, countStyle: .file))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.orange)
             }
 
-            Text("Identified safe developer caches, system logs, and unneeded disk images.")
+            Text("Discovered safe developer caches, system logs, and disposable disk images ready for Trash.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
 
-            Button(action: onApprove) {
+            VStack(spacing: 4) {
+                ForEach(candidates.prefix(3)) { target in
+                    HStack {
+                        Image(systemName: target.safetyTier == .safe ? "checkmark.shield.fill" : "exclamationmark.triangle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(target.safetyTier == .safe ? .green : .orange)
+                        Text(target.name)
+                            .font(.system(size: 11, weight: .semibold))
+                            .lineLimit(1)
+                        Spacer()
+                        Text(target.formattedSize)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.secondary.opacity(0.04))
+                    .cornerRadius(4)
+                }
+            }
+
+            Button(action: onReview) {
                 HStack {
                     Image(systemName: "shield.checkered")
                     Text("Review & Approve Cleanup")
@@ -344,168 +769,595 @@ struct CleanupActionCard: View {
             .controlSize(.small)
         }
         .padding(12)
-        .background(Color.orange.opacity(0.08))
+        .background(Color.orange.opacity(0.06))
         .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.orange.opacity(0.15), lineWidth: 1)
+        )
     }
 }
 
+// MARK: - Duplicate Action Card
 struct DuplicateActionCard: View {
     let duplicates: [DuplicateGroup]
+    let onReview: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: "doc.on.doc.fill")
                     .foregroundColor(.indigo)
-                Text("Duplicate Files Found")
-                    .font(.system(size: 12, weight: .bold))
+                Text("Duplicate Files Detected")
+                    .font(.system(size: 13, weight: .bold))
                 Spacer()
                 let wasted = duplicates.reduce(0) { $0 + $1.totalWastedSpace }
                 Text(ByteCountFormatter.string(fromByteCount: wasted, countStyle: .file))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.indigo)
             }
-            Text("Cryptographically matched across size and SHA-256 hash.")
+
+            Text("Identified \(duplicates.count) sets of identical files matched cryptographically via SHA-256.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
+
+            VStack(spacing: 4) {
+                ForEach(duplicates.prefix(3)) { group in
+                    HStack {
+                        Text(group.files.first?.name ?? "Duplicate")
+                            .font(.system(size: 11, weight: .semibold))
+                            .lineLimit(1)
+                        Spacer()
+                        Text("\(group.files.count) copies • \(group.formattedWastedSpace) wasted")
+                            .font(.system(size: 10))
+                            .foregroundColor(.indigo)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.secondary.opacity(0.04))
+                    .cornerRadius(4)
+                }
+            }
+
+            Button(action: onReview) {
+                HStack {
+                    Image(systemName: "doc.badge.arrow.up")
+                    Text("Review & Clean Duplicates")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.indigo)
+            .controlSize(.small)
         }
         .padding(12)
-        .background(Color.indigo.opacity(0.08))
+        .background(Color.indigo.opacity(0.06))
         .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.indigo.opacity(0.15), lineWidth: 1)
+        )
     }
 }
 
-struct StorageActionCard: View {
-    let overview: StorageOverview
+// MARK: - Full System Audit Card
+struct FullAuditCard: View {
+    let summary: FullAuditSummary
+    let onReviewCleanup: () -> Void
+    let onReviewDuplicates: () -> Void
+    let onReviewOrganization: () -> Void
+    let onNavigate: ((NavigationSection) -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with Reclaimable Badge
             HStack {
-                Text("\(overview.formattedAvailable) Free")
+                HStack(spacing: 8) {
+                    Image(systemName: "shield.lefthalf.filled.badge.checkmark")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green)
+                    Text("MacGuard System Audit Report")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                Spacer()
+                Text("\(summary.formattedReclaimable) Reclaimable")
                     .font(.system(size: 12, weight: .bold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.green.opacity(0.2))
                     .foregroundColor(.green)
-                Text("of \(overview.formattedTotal)")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .cornerRadius(6)
             }
-            ProgressView(value: overview.usagePercentage)
-                .tint(.blue)
+
+            // 4 Module Diagnostic Grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                // 1. APFS Storage
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Image(systemName: "internaldrive.fill")
+                            .foregroundColor(.blue)
+                        Text("APFS Storage")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    Text("\(summary.storage.formattedAvailable) available of \(summary.storage.formattedTotal)")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                    ProgressView(value: summary.storage.usagePercentage)
+                        .tint(.blue)
+                }
+                .padding(10)
+                .background(Color.secondary.opacity(0.04))
+                .cornerRadius(8)
+
+                // 2. Safe Cleanups
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.orange)
+                        Text("Disposable Caches")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    let totalSize = summary.cleanupCandidates.reduce(0) { $0 + $1.size }
+                    Text("\(summary.cleanupCandidates.count) targets • \(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                    Button("Review Cleanups", action: onReviewCleanup)
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                }
+                .padding(10)
+                .background(Color.secondary.opacity(0.04))
+                .cornerRadius(8)
+
+                // 3. Duplicates
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Image(systemName: "doc.on.doc.fill")
+                            .foregroundColor(.indigo)
+                        Text("Duplicate Files")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    let wasted = summary.duplicates.reduce(0) { $0 + $1.totalWastedSpace }
+                    Text("\(summary.duplicates.count) clusters • \(ByteCountFormatter.string(fromByteCount: wasted, countStyle: .file)) wasted")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                    if !summary.duplicates.isEmpty {
+                        Button("Review Duplicates", action: onReviewDuplicates)
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                    }
+                }
+                .padding(10)
+                .background(Color.secondary.opacity(0.04))
+                .cornerRadius(8)
+
+                // 4. File Organization
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Image(systemName: "folder.badge.gearshape")
+                            .foregroundColor(.teal)
+                        Text("Downloads Folder")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    Text("\(summary.unorganizedFilesCount) files ready to categorize")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                    if summary.unorganizedFilesCount > 0 {
+                        Button("Organize Now", action: onReviewOrganization)
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                    }
+                }
+                .padding(10)
+                .background(Color.secondary.opacity(0.04))
+                .cornerRadius(8)
+            }
         }
-        .padding(12)
-        .background(Color.secondary.opacity(0.06))
-        .cornerRadius(10)
+        .padding(14)
+        .background(Color.secondary.opacity(0.05))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.green.opacity(0.2), lineWidth: 1)
+        )
     }
 }
 
+// MARK: - Suggestion Chip
 struct SuggestionChip: View {
+    var icon: String? = nil
     let text: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(text)
-                .font(.system(size: 11, weight: .medium))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Color.secondary.opacity(0.08))
-                .cornerRadius(14)
+            HStack(spacing: 5) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 10))
+                }
+                Text(text)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.secondary.opacity(0.08))
+            .cornerRadius(14)
         }
         .buttonStyle(.plain)
     }
 }
 
+// MARK: - Organization Approval Sheet
 struct OrganizationApprovalSheet: View {
     let proposals: [OrganizationProposal]
-    let onApprove: () -> Void
+    let onApprove: ([OrganizationProposal]) -> Void
     let onCancel: () -> Void
+
+    @State private var selectedIDs: Set<UUID>
+
+    init(proposals: [OrganizationProposal], onApprove: @escaping ([OrganizationProposal]) -> Void, onCancel: @escaping () -> Void) {
+        self.proposals = proposals
+        self.onApprove = onApprove
+        self.onCancel = onCancel
+        _selectedIDs = State(initialValue: Set(proposals.map(\.id)))
+    }
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("Confirm File Organization")
-                .font(.system(size: 16, weight: .bold))
-
-            Text("MacGuard will move the following \(proposals.count) files into categorized folders. This action is 100% reversible via the Rollback Ledger.")
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            List(proposals) { p in
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(p.fileName)
-                        .font(.system(size: 12, weight: .semibold))
-                    HStack {
-                        Text(p.sourcePath)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Image(systemName: "arrow.right")
-                        Text(p.destinationPath)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Confirm File Organization")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Selected files will be categorized into subfolders. 100% reversible via Rollback Ledger.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                 }
-                .padding(.vertical, 4)
+                Spacer()
+                Button(selectedIDs.count == proposals.count ? "Deselect All" : "Select All") {
+                    if selectedIDs.count == proposals.count {
+                        selectedIDs.removeAll()
+                    } else {
+                        selectedIDs = Set(proposals.map(\.id))
+                    }
+                }
+                .font(.system(size: 11))
             }
-            .frame(height: 250)
+
+            List {
+                ForEach(proposals) { p in
+                    HStack(spacing: 10) {
+                        Toggle("", isOn: Binding(
+                            get: { selectedIDs.contains(p.id) },
+                            set: { isSelected in
+                                if isSelected {
+                                    selectedIDs.insert(p.id)
+                                } else {
+                                    selectedIDs.remove(p.id)
+                                }
+                            }
+                        ))
+                        .labelsHidden()
+
+                        Image(systemName: p.category.systemIcon)
+                            .font(.system(size: 12))
+                            .foregroundColor(.blue)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(p.fileName)
+                                .font(.system(size: 12, weight: .semibold))
+                            HStack(spacing: 4) {
+                                Text(p.sourceURL.deletingLastPathComponent().lastPathComponent)
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 9))
+                                Text(p.proposedDestinationURL.deletingLastPathComponent().lastPathComponent)
+                                    .foregroundColor(.blue)
+                            }
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Text(p.formattedSize)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+
+                        Button {
+                            NSWorkspace.shared.activateFileViewerSelecting([p.sourceURL])
+                        } label: {
+                            Image(systemName: "arrow.up.forward.app")
+                                .font(.system(size: 12))
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Reveal in Finder")
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .frame(height: 320)
 
             HStack {
                 Button("Cancel", action: onCancel)
                 Spacer()
-                Button("Approve Selected", action: onApprove)
-                    .buttonStyle(.borderedProminent)
+                Button("Approve Moving \(selectedIDs.count) Files") {
+                    let approved = proposals.filter { selectedIDs.contains($0.id) }
+                    onApprove(approved)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedIDs.isEmpty)
             }
             .padding(.top, 10)
         }
         .padding(20)
-        .frame(width: 540)
+        .frame(width: 600, height: 440)
     }
 }
 
+// MARK: - Cleanup Approval Sheet
 struct CleanupApprovalSheet: View {
     let targets: [CleanupTarget]
-    let onApprove: () -> Void
+    let onApprove: ([CleanupTarget]) -> Void
     let onCancel: () -> Void
+
+    @State private var selectedIDs: Set<UUID>
+
+    init(targets: [CleanupTarget], onApprove: @escaping ([CleanupTarget]) -> Void, onCancel: @escaping () -> Void) {
+        self.targets = targets
+        self.onApprove = onApprove
+        self.onCancel = onCancel
+        _selectedIDs = State(initialValue: Set(targets.map(\.id)))
+    }
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("Confirm Safe Cleanup")
-                .font(.system(size: 16, weight: .bold))
-
-            Text("Selected items will be safely relocated to macOS Trash. Nothing will be permanently deleted.")
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            List(targets) { t in
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(t.name)
-                            .font(.system(size: 12, weight: .semibold))
-                        Text(t.path)
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-                    Spacer()
-                    Text(t.formattedSize)
-                        .font(.system(size: 11, weight: .medium))
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Confirm Safe Cleanup")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Selected items will be safely relocated to macOS Trash. Nothing is deleted permanently.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                 }
-                .padding(.vertical, 4)
+                Spacer()
+                Button(selectedIDs.count == targets.count ? "Deselect All" : "Select All") {
+                    if selectedIDs.count == targets.count {
+                        selectedIDs.removeAll()
+                    } else {
+                        selectedIDs = Set(targets.map(\.id))
+                    }
+                }
+                .font(.system(size: 11))
             }
-            .frame(height: 250)
+
+            List {
+                ForEach(targets) { t in
+                    let isSafe = t.safetyTier == .safe
+                    HStack(spacing: 10) {
+                        Toggle("", isOn: Binding(
+                            get: { selectedIDs.contains(t.id) },
+                            set: { isSelected in
+                                if isSelected {
+                                    selectedIDs.insert(t.id)
+                                } else {
+                                    selectedIDs.remove(t.id)
+                                }
+                            }
+                        ))
+                        .labelsHidden()
+
+                        Image(systemName: isSafe ? "checkmark.shield.fill" : "exclamationmark.triangle.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(isSafe ? .green : .orange)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(t.name)
+                                .font(.system(size: 12, weight: .semibold))
+                            Text(t.path)
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+
+                        Spacer()
+
+                        Text(t.formattedSize)
+                            .font(.system(size: 11, weight: .medium))
+
+                        Button {
+                            NSWorkspace.shared.activateFileViewerSelecting([t.url])
+                        } label: {
+                            Image(systemName: "arrow.up.forward.app")
+                                .font(.system(size: 12))
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Reveal in Finder")
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .frame(height: 320)
 
             HStack {
                 Button("Cancel", action: onCancel)
                 Spacer()
-                Button("Approve Cleanup to Trash", action: onApprove)
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
+                let approved = targets.filter { selectedIDs.contains($0.id) }
+                let totalApprovedSize = approved.reduce(0) { $0 + $1.size }
+                let formatted = ByteCountFormatter.string(fromByteCount: totalApprovedSize, countStyle: .file)
+
+                Button("Approve Cleanup to Trash (\(formatted))") {
+                    onApprove(approved)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+                .disabled(selectedIDs.isEmpty)
             }
             .padding(.top, 10)
         }
         .padding(20)
-        .frame(width: 540)
+        .frame(width: 600, height: 440)
+    }
+}
+
+// MARK: - Duplicate Approval Sheet
+struct DuplicateApprovalSheet: View {
+    let duplicates: [DuplicateGroup]
+    let onApprove: (Int, Int64) -> Void
+    let onCancel: () -> Void
+
+    @State private var selectedCopyPaths: Set<String> = []
+
+    init(duplicates: [DuplicateGroup], onApprove: @escaping (Int, Int64) -> Void, onCancel: @escaping () -> Void) {
+        self.duplicates = duplicates
+        self.onApprove = onApprove
+        self.onCancel = onCancel
+
+        var initial: Set<String> = []
+        for group in duplicates {
+            // Default to selecting all copies except the first one (the original)
+            for copy in group.files.dropFirst() {
+                initial.insert(copy.path)
+            }
+        }
+        _selectedCopyPaths = State(initialValue: initial)
+    }
+
+    private var totalFreedBytes: Int64 {
+        var total: Int64 = 0
+        for group in duplicates {
+            for file in group.files where selectedCopyPaths.contains(file.path) {
+                total += file.size
+            }
+        }
+        return total
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Confirm Duplicate Cleanup")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Keep the original file and move duplicate copies safely to macOS Trash.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button(selectedCopyPaths.isEmpty ? "Select All Copies" : "Deselect All") {
+                    if selectedCopyPaths.isEmpty {
+                        var all: Set<String> = []
+                        for group in duplicates {
+                            for copy in group.files.dropFirst() {
+                                all.insert(copy.path)
+                            }
+                        }
+                        selectedCopyPaths = all
+                    } else {
+                        selectedCopyPaths.removeAll()
+                    }
+                }
+                .font(.system(size: 11))
+            }
+
+            List {
+                ForEach(duplicates) { group in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Image(systemName: "doc.on.doc.fill")
+                                .foregroundColor(.indigo)
+                            Text(group.files.first?.name ?? "Cluster")
+                                .font(.system(size: 12, weight: .bold))
+                            Spacer()
+                            Text("\(group.files.count) copies • \(group.formattedWastedSpace) wasted")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.indigo)
+                        }
+
+                        ForEach(Array(group.files.enumerated()), id: \.element.id) { index, file in
+                            HStack(spacing: 8) {
+                                if index == 0 {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                        .font(.system(size: 11))
+                                    Text("Keep Original")
+                                        .font(.system(size: 10, weight: .semibold))
+                                        .foregroundColor(.green)
+                                } else {
+                                    Toggle("", isOn: Binding(
+                                        get: { selectedCopyPaths.contains(file.path) },
+                                        set: { isSelected in
+                                            if isSelected {
+                                                selectedCopyPaths.insert(file.path)
+                                            } else {
+                                                selectedCopyPaths.remove(file.path)
+                                            }
+                                        }
+                                    ))
+                                    .labelsHidden()
+                                }
+
+                                Text(file.path)
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+
+                                Spacer()
+
+                                Button {
+                                    NSWorkspace.shared.activateFileViewerSelecting([file.url])
+                                } label: {
+                                    Image(systemName: "arrow.up.forward.app")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.blue)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Reveal in Finder")
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
+            }
+            .frame(height: 320)
+
+            HStack {
+                Button("Cancel", action: onCancel)
+                Spacer()
+
+                let count = selectedCopyPaths.count
+                let formatted = ByteCountFormatter.string(fromByteCount: totalFreedBytes, countStyle: .file)
+
+                Button("Clean \(count) Duplicates to Trash (\(formatted))") {
+                    let freed = totalFreedBytes
+                    var removed = 0
+                    for group in duplicates {
+                        for file in group.files where selectedCopyPaths.contains(file.path) {
+                            do {
+                                try FileManager.default.trashItem(at: file.url, resultingItemURL: nil)
+                                RollbackLedger.shared.recordOperation(OperationRecord(
+                                    actionType: .moveToTrash,
+                                    sourcePath: file.path,
+                                    fileSize: file.size,
+                                    reason: "Duplicate file removed by AI Assistant"
+                                ))
+                                removed += 1
+                            } catch {}
+                        }
+                    }
+                    onApprove(removed, freed)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.indigo)
+                .disabled(selectedCopyPaths.isEmpty)
+            }
+            .padding(.top, 10)
+        }
+        .padding(20)
+        .frame(width: 600, height: 440)
     }
 }
