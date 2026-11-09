@@ -35,6 +35,17 @@ public struct OperationRecord: Identifiable, Codable, Sendable {
         return ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
     }
 
+    private static let staticDateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateStyle = .short
+        df.timeStyle = .short
+        return df
+    }()
+
+    public var formattedDate: String {
+        Self.staticDateFormatter.string(from: timestamp)
+    }
+
     public var systemImageName: String {
         switch actionType {
         case .moveToTrash:

@@ -118,6 +118,24 @@ public final class StorageAnalyzer: Sendable {
     public static let shared = StorageAnalyzer()
     private static let logger = Logger(subsystem: "com.macguard", category: "StorageAnalyzer")
 
+    private let cacheLock = NSLock()
+    private final class CacheHolder: @unchecked Sendable {
+        var cachedOverview: StorageOverview?
+    }
+    private let cacheHolder = CacheHolder()
+
+    public var cachedOverview: StorageOverview? {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        return cacheHolder.cachedOverview
+    }
+
+    public func setCachedOverview(_ overview: StorageOverview) {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        cacheHolder.cachedOverview = overview
+    }
+
     private init() {}
 
     /// Scans APFS volumes and user directories, grouping discovered files by category without discarding them.
@@ -195,7 +213,7 @@ public final class StorageAnalyzer: Sendable {
         // 4. Calculate initial reclaimable estimate (old installers + archives in downloads)
         let reclaimable = (categoryTotals[.installers] ?? 0) + (categoryTotals[.archives] ?? 0)
 
-        return StorageOverview(
+        let overview = StorageOverview(
             totalCapacity: totalSpace,
             availableCapacity: freeSpace,
             usedCapacity: usedSpace,
@@ -204,6 +222,8 @@ public final class StorageAnalyzer: Sendable {
             largestFiles: Array(sortedLargest),
             reclaimableEstimate: reclaimable
         )
+        setCachedOverview(overview)
+        return overview
     }
 
     /// Convenience wrapper preserving backward compatibility with existing callers.

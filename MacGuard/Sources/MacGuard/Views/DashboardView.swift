@@ -232,7 +232,7 @@ public struct RecentOperationRowView: View {
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
 
-                    Text(op.timestamp, style: .relative)
+                    Text(op.formattedDate)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -652,7 +652,6 @@ public struct DashboardView: View {
         .onAppear {
             permissions.checkPermissions()
             liveMetrics = StorageAnalyzer.shared.getLiveVolumeMetrics()
-            refreshData()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             permissions.checkPermissions()

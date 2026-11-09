@@ -104,7 +104,9 @@ public struct CleanupView: View {
             }
         }
         .onAppear {
-            loadCandidates()
+            if candidates.isEmpty {
+                loadCandidates()
+            }
         }
         .quickLookPreview($previewURL)
         .popover(item: $inspectingTarget) { target in

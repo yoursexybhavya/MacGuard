@@ -54,43 +54,34 @@ public final class HardwareMonitor: ObservableObject {
     public static let shared = HardwareMonitor()
 
     @Published public private(set) var hardwareInfo: HardwareInfo
-    private var refreshTimer: AnyCancellable?
 
-    private init() {
-        self.hardwareInfo = HardwareMonitor.queryHardware()
-        startPeriodicRefresh()
-    }
-
-    public func refresh() {
-        self.hardwareInfo = HardwareMonitor.queryHardware()
-    }
-
-    private func startPeriodicRefresh() {
-        // Poll memory every 5 seconds on main runloop
-        refreshTimer = Timer.publish(every: 5.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                self?.refresh()
-            }
-    }
-
-    nonisolated public static func queryHardware() -> HardwareInfo {
-        // 1. Metal Device Query
+    // Static hardware info cached once on startup to eliminate unnecessary Metal/GPU wakeups
+    nonisolated private static let staticHardware: (chipName: String, hasUnified: Bool, cores: Int, physicalBytes: UInt64, formattedPhysical: String) = {
         let defaultDevice = MTLCreateSystemDefaultDevice()
         let allDevices = MTLCopyAllDevices()
         let primaryDevice = defaultDevice ?? allDevices.first
         let rawName = primaryDevice?.name ?? "Apple Silicon Metal"
         let hasUnified = primaryDevice?.hasUnifiedMemory ?? true
-
-        // Clean device name if needed
         let chipName = rawName.isEmpty ? "Apple Silicon" : rawName
-
-        // 2. CPU & Total Physical Memory
         let cores = ProcessInfo.processInfo.activeProcessorCount
         let physicalBytes = ProcessInfo.processInfo.physicalMemory
         let formattedPhysical = ByteCountFormatter.string(fromByteCount: Int64(physicalBytes), countStyle: .memory)
+        return (chipName, hasUnified, cores, physicalBytes, formattedPhysical)
+    }()
 
-        // 3. Process Resident Memory (mach_task_basic_info)
+    private init() {
+        self.hardwareInfo = HardwareMonitor.queryHardware()
+    }
+
+    /// On-demand refresh of live memory telemetry without waking up Metal GPU framework.
+    public func refresh() {
+        self.hardwareInfo = HardwareMonitor.queryHardware()
+    }
+
+    nonisolated public static func queryHardware() -> HardwareInfo {
+        let (chipName, hasUnified, cores, physicalBytes, formattedPhysical) = staticHardware
+
+        // 1. Process Resident Memory (mach_task_basic_info) - zero GPU, pure kernel call
         var residentBytes: Int64 = 0
         var taskInfo = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
@@ -106,7 +97,7 @@ public final class HardwareMonitor: ObservableObject {
             ? ByteCountFormatter.string(fromByteCount: residentBytes, countStyle: .memory)
             : "0 MB Idle"
 
-        // 4. System Free Memory (vm_statistics64)
+        // 2. System Free Memory (vm_statistics64) - lightweight kernel call
         var freeBytes: Int64 = 0
         var vmStats = vm_statistics64()
         var vmCount = mach_msg_type_number_t(MemoryLayout<vm_statistics64>.size / MemoryLayout<integer_t>.size)

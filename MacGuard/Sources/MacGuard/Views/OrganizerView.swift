@@ -108,7 +108,9 @@ public struct OrganizerView: View {
         }
         .quickLookPreview($previewURL)
         .onAppear {
-            analyzeFolder()
+            if proposals.isEmpty && folderMerges.isEmpty {
+                analyzeFolder()
+            }
         }
         // Confirmation for File Organization
         .sheet(isPresented: $showConfirmSheet) {

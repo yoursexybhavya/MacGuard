@@ -258,9 +258,9 @@ public struct DuplicatesView: View {
         .onAppear {
             if let target = coordinator.duplicateScanFolder {
                 self.scanPath = target
-            }
-            if clusters.isEmpty {
-                startScan()
+                if clusters.isEmpty {
+                    startScan()
+                }
             }
         }
         .onChange(of: coordinator.duplicateScanFolder) { _, newFolder in

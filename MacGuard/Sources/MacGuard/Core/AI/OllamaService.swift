@@ -71,7 +71,7 @@ public final class OllamaService: Sendable {
             "system": systemPrompt,
             "stream": false,
             "format": "json",
-            "keep_alive": "30s",
+            "keep_alive": "10s",
             "options": [
                 "temperature": 0.1,
                 "top_p": 0.9,

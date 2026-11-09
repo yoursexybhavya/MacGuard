@@ -48,7 +48,7 @@ MacGuard is a pure native macOS 14.0+ SwiftUI application designed as an offline
 | M2 | Storage Analyzer Interactivity & Category Drill-Down | Features F5, F6, F7, F8, F9: Interactive 12 category buttons, dynamic segmented storage bar, `CategoryDetailView`, Largest Files action controls (Reveal, Trash with confirmation, Metadata sheet, Quick Look) | M1 | DONE |
 | M3 | Shell Navigation & Core Workflow Screens | Features F10, F11, F12, F13, F14, F15: `NavigationCoordinator`, live hardware status pill, Dashboard interactive gauge & actions, Duplicate Finder folder picker & keeper switcher, Organizer folder consolidation & proposal checkboxes, Assistant persistent chat & chips | M1, M2 | DONE |
 | M4 | Secondary Screens & Settings Overhaul | Features F16, F17, F18: Cleanup Center select-all & directory drill-down, Approvals file sizes & batch rollback, Settings live Ollama & Metal hardware & settings persistence | M1, M3 | DONE |
-| M5 | Final Milestone: Test Suite & Adversarial Hardening | Features F19, F20: Verify 100% pass on all existing 20 unit tests, verify new automated tests for interactive behaviors, ledger state transitions, and category filtering, complete adversarial hardening | M2, M3, M4 | IN_PROGRESS |
+| M5 | Final Milestone: Test Suite & Adversarial Hardening | Features F19, F20: Verify 100% pass on all existing 20 unit tests, verify new automated tests for interactive behaviors, ledger state transitions, and category filtering, complete adversarial hardening | M2, M3, M4 | DONE |
 
 ## Interface Contracts
 

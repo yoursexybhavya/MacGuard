@@ -654,7 +654,13 @@ public struct StorageView: View {
             if let target = coordinator.storageDrillDownCategory {
                 self.drillDownCategory = target
             }
-            loadStorageData()
+            if overview == nil {
+                if let cached = StorageAnalyzer.shared.cachedOverview {
+                    self.overview = cached
+                } else {
+                    loadStorageData()
+                }
+            }
         }
         .onChange(of: coordinator.storageDrillDownCategory) { _, newCategory in
             if let target = newCategory {
