@@ -87,7 +87,8 @@ public final class MacGuardAIEngine: Sendable {
         let ollama = OllamaService.shared
         if await ollama.isServiceAvailable() {
             do {
-                let jsonString = try await ollama.generateJSON(prompt: trimmed, systemPrompt: systemPrompt)
+                let targetModel = AppSettings.effectiveOllamaModel()
+                let jsonString = try await ollama.generateJSON(prompt: trimmed, systemPrompt: systemPrompt, model: targetModel)
                 if let data = jsonString.data(using: .utf8),
                    let response = try? JSONDecoder().decode(MacGuardResponse.self, from: data) {
                     if let tool = response.toolCall {

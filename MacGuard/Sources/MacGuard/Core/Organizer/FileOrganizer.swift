@@ -335,13 +335,28 @@ public final class FileOrganizer: Sendable {
         for merge in merges {
             guard fileManager.fileExists(atPath: merge.sourceURL.path) else { continue }
 
+            let srcPath = merge.sourceURL.standardized.path
+            let dstPath = merge.destinationURL.standardized.path
+
+            // Guard against self-merges
+            guard srcPath != dstPath else {
+                Self.logger.warning("Skipping self-merge for '\(srcPath, privacy: .public)'")
+                continue
+            }
+
+            // Guard against circular descendant moves (moving parent into child)
+            guard !dstPath.hasPrefix(srcPath + "/") else {
+                Self.logger.error("Skipping dangerous recursive merge where destination is inside source: '\(srcPath, privacy: .public)' -> '\(dstPath, privacy: .public)'")
+                continue
+            }
+
             // Ensure destination directory exists
             if !fileManager.fileExists(atPath: merge.destinationURL.path) {
                 try fileManager.createDirectory(at: merge.destinationURL, withIntermediateDirectories: true)
             }
 
             // Move each item from source to destination
-            let contents = try fileManager.contentsOfDirectory(at: merge.sourceURL, includingPropertiesForKeys: nil)
+            let contents = try fileManager.contentsOfDirectory(at: merge.sourceURL, includingPropertiesForKeys: [.fileSizeKey])
             for item in contents {
                 var targetDest = merge.destinationURL.appendingPathComponent(item.lastPathComponent)
                 if fileManager.fileExists(atPath: targetDest.path) {
@@ -355,18 +370,41 @@ public final class FileOrganizer: Sendable {
                     }
                 }
 
+                let itemSize = (try? item.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.map { Int64($0) } ?? 0
+
                 try securityGuard.safelyMoveItem(from: item, to: targetDest)
                 ledger.recordOperation(OperationRecord(
                     actionType: .moveFile,
                     sourcePath: item.path,
                     destinationPath: targetDest.path,
-                    fileSize: 0,
+                    fileSize: itemSize,
                     reason: "Consolidated from '\(merge.sourceName)' to '\(merge.destinationName)'"
                 ))
             }
 
-            // Safely remove empty source directory
-            try? fileManager.removeItem(at: merge.sourceURL)
+            // Safely relocate empty source directory to macOS Trash (Zero Permanent Deletion)
+            let remainingItems = (try? fileManager.contentsOfDirectory(at: merge.sourceURL, includingPropertiesForKeys: nil)) ?? []
+            let meaningfulItems = remainingItems.filter { $0.lastPathComponent != ".DS_Store" }
+            if meaningfulItems.isEmpty {
+                // If only .DS_Store remains, safely clean it up so directory can be trashed
+                if let dsStore = remainingItems.first(where: { $0.lastPathComponent == ".DS_Store" }) {
+                    _ = try? securityGuard.safelyMoveToTrash(at: dsStore)
+                }
+                do {
+                    let trashedDirURL = try securityGuard.safelyMoveToTrash(at: merge.sourceURL, reason: "Folder consolidation empty source")
+                    ledger.recordOperation(OperationRecord(
+                        actionType: .moveToTrash,
+                        sourcePath: merge.sourceURL.path,
+                        destinationPath: trashedDirURL.path,
+                        fileSize: 0,
+                        reason: "Safely trashed empty source directory after consolidation into '\(merge.destinationName)'"
+                    ))
+                } catch {
+                    Self.logger.warning("Could not trash empty source directory '\(merge.sourceURL.path, privacy: .public)': \(error.localizedDescription, privacy: .public)")
+                }
+            } else {
+                Self.logger.warning("Source directory '\(merge.sourceURL.path, privacy: .public)' still contains \(meaningfulItems.count) items; keeping intact to avoid data loss.")
+            }
         }
     }
 

@@ -82,6 +82,15 @@ public final class SecurityGuard: Sendable {
 
         // Check if modifying sensitive user directories
         if forModification {
+            let homeURL = FileManager.default.homeDirectoryForCurrentUser.standardized.resolvingSymlinksInPath()
+            let userTrashURL = homeURL.appendingPathComponent(".Trash")
+
+            // Block direct modification, trashing, or removal of the ~/.Trash directory itself
+            if url == userTrashURL || resolvedPath == userTrashURL.path || resolvedPath.hasSuffix("/.Trash") {
+                Self.logger.warning("Protected user directory modification blocked: ~/.Trash")
+                throw SecurityError.protectedPath(resolvedPath)
+            }
+
             for component in url.pathComponents {
                 if protectedUserDirectories.contains(component) {
                     Self.logger.warning("Protected user directory modification blocked: \(component, privacy: .public)")
@@ -95,18 +104,30 @@ public final class SecurityGuard: Sendable {
 
     /// Moves a file safely to the macOS Trash, returning the resulting URL in Trash.
     /// This is strictly preferred over permanent deletion.
-    public func safelyMoveToTrash(at url: URL) throws -> URL {
+    public func safelyMoveToTrash(at url: URL, reason: String = "User requested trash") throws -> URL {
         let validURL = try validatePath(url.path, forModification: true)
+
+        // Prevent moving items already inside .Trash to Trash again
+        if validURL.pathComponents.contains(".Trash") {
+            Self.logger.warning("Cannot trash item already located in macOS Trash: \(validURL.path, privacy: .public)")
+            throw SecurityError.protectedPath(validURL.path)
+        }
+
         var resultingURL: NSURL?
         
         try FileManager.default.trashItem(at: validURL, resultingItemURL: &resultingURL)
         
         guard let trashedURL = resultingURL as URL? else {
             Self.logger.error("Moved to trash, but did not receive resulting URL for: \(validURL.path, privacy: .public)")
+            let homeURL = FileManager.default.homeDirectoryForCurrentUser
+            let fallbackTrashURL = homeURL.appendingPathComponent(".Trash").appendingPathComponent(validURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: fallbackTrashURL.path) {
+                return fallbackTrashURL
+            }
             return validURL
         }
         
-        Self.logger.notice("Successfully moved to Trash: \(validURL.path, privacy: .public) -> \(trashedURL.path, privacy: .public)")
+        Self.logger.notice("Successfully moved to Trash (\(reason, privacy: .public)): \(validURL.path, privacy: .public) -> \(trashedURL.path, privacy: .public)")
         return trashedURL
     }
 

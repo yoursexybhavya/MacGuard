@@ -1,53 +1,29 @@
 import SwiftUI
-
-public enum NavigationSection: String, CaseIterable, Identifiable {
-    case dashboard = "Dashboard"
-    case assistant = "AI Assistant"
-    case storage = "Storage Analyzer"
-    case duplicates = "Duplicate Finder"
-    case organizer = "File Organizer"
-    case cleanup = "Cleanup Center"
-    case approvals = "Approvals & History"
-    case settings = "Settings & Model"
-
-    public var id: String { rawValue }
-
-    public var icon: String {
-        switch self {
-        case .dashboard: return "speedometer"
-        case .assistant: return "sparkles"
-        case .storage: return "chart.pie.fill"
-        case .duplicates: return "doc.on.doc.fill"
-        case .organizer: return "folder.badge.gearshape"
-        case .cleanup: return "trash.fill"
-        case .approvals: return "clock.arrow.circlepath"
-        case .settings: return "gearshape.fill"
-        }
-    }
-}
+import AppKit
+import QuickLook
 
 public struct MainView: View {
-    @State private var selectedSection: NavigationSection? = .dashboard
+    @ObservedObject private var coordinator = NavigationCoordinator.shared
 
     public init() {}
 
     public var body: some View {
         NavigationSplitView {
-            SidebarView(selectedSection: $selectedSection)
+            SidebarView(selectedSection: coordinator.selectionBinding)
                 .navigationSplitViewColumnWidth(min: 210, ideal: 230, max: 280)
         } detail: {
             Group {
-                switch selectedSection ?? .dashboard {
+                switch coordinator.selectedSection {
                 case .dashboard:
                     DashboardView(onNavigate: { section in
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                            selectedSection = section
+                            coordinator.navigateTo(section: section)
                         }
                     })
                 case .assistant:
                     AssistantView(onNavigate: { section in
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                            selectedSection = section
+                            coordinator.navigateTo(section: section)
                         }
                     })
                 case .storage:
@@ -66,12 +42,16 @@ public struct MainView: View {
             }
             .frame(minWidth: 700, minHeight: 520)
             .background(Color(nsColor: .windowBackgroundColor))
+            .quickLookPreview($coordinator.previewURL)
         }
     }
 }
 
 struct SidebarView: View {
     @Binding var selectedSection: NavigationSection?
+    @ObservedObject private var hardware = HardwareMonitor.shared
+    @ObservedObject private var coordinator = NavigationCoordinator.shared
+    @State private var isHovered: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -126,24 +106,42 @@ struct SidebarView: View {
 
             Spacer()
 
-            // Hardware & Engine Status Pill
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 8, height: 8)
-                    Text("Apple M5 Pro • Metal")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.primary)
+            // Hardware & Engine Status Pill (Interactive & Dynamic)
+            Button {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                    coordinator.navigateToSettings()
                 }
-                Text("Standalone Offline AI • 0 MB Idle RAM")
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+            } label: {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 8, height: 8)
+                        Text(hardware.hardwareInfo.deviceSummary)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                    }
+                    Text(hardware.hardwareInfo.activeMemorySummary)
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.secondary.opacity(0.1))
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.primary.opacity(isHovered ? 0.15 : 0.0), lineWidth: 1)
+                )
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.secondary.opacity(0.1))
-            .cornerRadius(8)
+            .buttonStyle(.plain)
+            .help("Hardware: \(hardware.hardwareInfo.chipName) (\(hardware.hardwareInfo.coreCount) Cores, \(hardware.hardwareInfo.formattedPhysicalMemory)). Click to open Settings.")
+            .onHover { hovering in
+                isHovered = hovering
+                if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+            }
             .padding(12)
         }
     }

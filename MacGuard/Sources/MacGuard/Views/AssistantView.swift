@@ -34,260 +34,35 @@ public struct ChatMessage: Identifiable, Sendable {
     }
 }
 
-public struct AssistantView: View {
-    public var onNavigate: ((NavigationSection) -> Void)?
+// MARK: - Assistant View Model (Feature F15)
 
-    @State private var messages: [ChatMessage] = [
-        ChatMessage(
-            isUser: false,
-            text: "Hello! I am MacGuard, your specialized local maintenance assistant. Ask me to organize your Downloads, merge messy folders, clean temporary caches, analyze disk space, or run a full system audit."
-        )
-    ]
-    @State private var currentInput: String = ""
-    @State private var isProcessing: Bool = false
-    @State private var activeSheet: AssistantActiveSheet? = nil
-    @State private var trashedFileNotification: String? = nil
+@MainActor
+public final class AssistantViewModel: ObservableObject {
+    public static let shared = AssistantViewModel()
 
-    public init(onNavigate: ((NavigationSection) -> Void)? = nil) {
-        self.onNavigate = onNavigate
+    @Published public var messages: [ChatMessage]
+    @Published public var currentInput: String = ""
+    @Published public var isProcessing: Bool = false
+    @Published public var activeSheet: AssistantActiveSheet? = nil
+    @Published public var trashedFileNotification: String? = nil
+
+    public init(initialMessages: [ChatMessage]? = nil) {
+        self.messages = initialMessages ?? [
+            ChatMessage(
+                isUser: false,
+                text: "Hello! I am MacGuard, your specialized local maintenance assistant. Ask me to organize your Downloads, merge messy folders, clean temporary caches, analyze disk space, or run a full system audit."
+            )
+        ]
     }
 
-    public var body: some View {
-        VStack(spacing: 0) {
-            // Header Bar
-            HStack {
-                HStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.purple)
-                    Text("AI Maintenance Assistant")
-                        .font(.system(size: 16, weight: .bold))
-                }
-                Spacer()
-                Text("Powered by MacGuard AI Specialized Model (Local Metal)")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(Color.secondary.opacity(0.05))
-
-            if let notification = trashedFileNotification {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text(notification)
-                        .font(.system(size: 12))
-                    Spacer()
-                    Button {
-                        trashedFileNotification = nil
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.green.opacity(0.12))
-            }
-
-            Divider()
-
-            // Chat Messages Scroll
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(messages) { msg in
-                            ChatBubbleView(
-                                message: msg,
-                                onOpenOrganizationSheet: { proposals, folderMerges in
-                                    self.activeSheet = .organization(proposals: proposals, folderMerges: folderMerges)
-                                },
-                                onOpenCleanupSheet: { cleanups in
-                                    self.activeSheet = .cleanup(cleanups)
-                                },
-                                onOpenDuplicateSheet: { duplicates in
-                                    self.activeSheet = .duplicates(duplicates)
-                                },
-                                onTrashFile: { item in
-                                    trashSingleFile(item)
-                                },
-                                onNavigate: onNavigate,
-                                onTriggerPrompt: { prompt in
-                                    sendQuery(prompt)
-                                }
-                            )
-                        }
-
-                        if isProcessing {
-                            HStack(spacing: 10) {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                Text("Analyzing filesystem and running neural intent dispatch...")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                            }
-                            .padding(.horizontal, 20)
-                            .id("loadingIndicator")
-                        }
-                    }
-                    .padding(20)
-                }
-                .onChange(of: messages.count) {
-                    if let last = messages.last {
-                        withAnimation {
-                            proxy.scrollTo(last.id, anchor: .bottom)
-                        }
-                    }
-                }
-            }
-
-            Divider()
-
-            // Suggested Action Chips
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    SuggestionChip(icon: "folder.badge.gearshape", text: "Organize my Downloads folder") {
-                        sendQuery("Organize my Downloads folder")
-                    }
-                    SuggestionChip(icon: "folder.fill.badge.plus", text: "Consolidate duplicate folders") {
-                        sendQuery("consolidate duplicate folders in Downloads")
-                    }
-                    SuggestionChip(icon: "trash", text: "Find unnecessary files taking up space") {
-                        sendQuery("Find unnecessary files taking up space")
-                    }
-                    SuggestionChip(icon: "chart.bar.xaxis", text: "Show largest files on my Mac") {
-                        sendQuery("Show me the largest files on my Mac")
-                    }
-                    SuggestionChip(icon: "doc.on.doc", text: "Find duplicate files") {
-                        sendQuery("Find duplicate files")
-                    }
-                    SuggestionChip(icon: "shield.checkered", text: "Full system audit") {
-                        sendQuery("full")
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-            }
-
-            // Input Bar
-            HStack(spacing: 12) {
-                TextField("Ask MacGuard to organize, clean, or inspect...", text: $currentInput)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13))
-                    .padding(10)
-                    .background(Color.secondary.opacity(0.08))
-                    .cornerRadius(8)
-                    .onSubmit {
-                        submitInput()
-                    }
-
-                Button {
-                    submitInput()
-                } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .blue)
-                }
-                .buttonStyle(.plain)
-                .disabled(currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing)
-            }
-            .padding(14)
-            .background(Color.secondary.opacity(0.04))
-        }
-        .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .organization(let proposals, let folderMerges):
-                OrganizationApprovalSheet(
-                    proposals: proposals,
-                    folderMerges: folderMerges,
-                    onApprove: { approvedProposals, approvedMerges in
-                        do {
-                            if !approvedMerges.isEmpty {
-                                try FileOrganizer.shared.executeFolderMerges(approvedMerges)
-                            }
-                            if !approvedProposals.isEmpty {
-                                try FileOrganizer.shared.executeProposals(approvedProposals)
-                            }
-                            var parts: [String] = []
-                            if !approvedMerges.isEmpty {
-                                parts.append("consolidated \(approvedMerges.count) redundant folders")
-                            }
-                            if !approvedProposals.isEmpty {
-                                parts.append("organized \(approvedProposals.count) files")
-                            }
-                            let text = parts.joined(separator: " and ")
-                            messages.append(ChatMessage(
-                                isUser: false,
-                                text: "Successfully \(text) into a clean, unified structure. All changes recorded in the Rollback Ledger."
-                            ))
-                        } catch {
-                            messages.append(ChatMessage(
-                                isUser: false,
-                                text: "Encountered an issue during organization: \(error.localizedDescription)"
-                            ))
-                        }
-                        activeSheet = nil
-                    },
-                    onCancel: {
-                        activeSheet = nil
-                    }
-                )
-
-            case .cleanup(let targets):
-                CleanupApprovalSheet(
-                    targets: targets,
-                    onApprove: { approvedTargets in
-                        do {
-                            let totalSize = approvedTargets.reduce(0) { $0 + $1.size }
-                            let formatted = ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
-                            try CleanupEngine.shared.executeCleanup(targets: approvedTargets)
-                            messages.append(ChatMessage(
-                                isUser: false,
-                                text: "Safely moved \(approvedTargets.count) items (\(formatted)) to macOS Trash. You can undo this anytime from Approvals & History."
-                            ))
-                        } catch {
-                            messages.append(ChatMessage(
-                                isUser: false,
-                                text: "Cleanup error: \(error.localizedDescription)"
-                            ))
-                        }
-                        activeSheet = nil
-                    },
-                    onCancel: {
-                        activeSheet = nil
-                    }
-                )
-
-            case .duplicates(let duplicates):
-                DuplicateApprovalSheet(
-                    duplicates: duplicates,
-                    onApprove: { removedCount, freedBytes in
-                        let formatted = ByteCountFormatter.string(fromByteCount: freedBytes, countStyle: .file)
-                        messages.append(ChatMessage(
-                            isUser: false,
-                            text: "Safely relocated \(removedCount) duplicate copies (\(formatted)) to macOS Trash. Originals were preserved intact."
-                        ))
-                        activeSheet = nil
-                    },
-                    onCancel: {
-                        activeSheet = nil
-                    }
-                )
-            }
-        }
-    }
-
-    private func submitInput() {
+    public func submitInput() {
         let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         currentInput = ""
         sendQuery(trimmed)
     }
 
-    private func sendQuery(_ query: String) {
+    public func sendQuery(_ query: String) {
         messages.append(ChatMessage(isUser: true, text: query))
         isProcessing = true
 
@@ -313,12 +88,13 @@ public struct AssistantView: View {
         }
     }
 
-    private func trashSingleFile(_ item: ScannedItem) {
+    public func trashSingleFile(_ item: ScannedItem) {
         do {
-            try FileManager.default.trashItem(at: item.url, resultingItemURL: nil)
+            let trashedURL = try SecurityGuard.shared.safelyMoveToTrash(at: item.url, reason: "AI Assistant quick-trash")
             RollbackLedger.shared.recordOperation(OperationRecord(
                 actionType: .moveToTrash,
                 sourcePath: item.path,
+                destinationPath: trashedURL.path,
                 fileSize: item.size,
                 reason: "User quick-trashed large file from AI Assistant: \(item.name)"
             ))
@@ -328,6 +104,252 @@ public struct AssistantView: View {
         } catch {
             withAnimation {
                 trashedFileNotification = "Failed to trash file: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    public func clearHistory() {
+        messages = [
+            ChatMessage(
+                isUser: false,
+                text: "Conversation cleared. How can I help maintain your Mac today?"
+            )
+        ]
+    }
+}
+
+public struct AssistantView: View {
+    public var onNavigate: ((NavigationSection) -> Void)?
+    @ObservedObject private var viewModel = AssistantViewModel.shared
+
+    public init(onNavigate: ((NavigationSection) -> Void)? = nil) {
+        self.onNavigate = onNavigate
+    }
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            // Header Bar
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.purple)
+                    Text("AI Maintenance Assistant")
+                        .font(.system(size: 16, weight: .bold))
+                }
+                Spacer()
+                Text("Powered by MacGuard AI Specialized Model (Local Metal)")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(Color.secondary.opacity(0.05))
+
+            if let notification = viewModel.trashedFileNotification {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text(notification)
+                        .font(.system(size: 12))
+                    Spacer()
+                    Button {
+                        viewModel.trashedFileNotification = nil
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.green.opacity(0.12))
+            }
+
+            Divider()
+
+            // Chat Messages Scroll
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(viewModel.messages) { msg in
+                            ChatBubbleView(
+                                message: msg,
+                                onOpenOrganizationSheet: { proposals, folderMerges in
+                                    viewModel.activeSheet = .organization(proposals: proposals, folderMerges: folderMerges)
+                                },
+                                onOpenCleanupSheet: { cleanups in
+                                    viewModel.activeSheet = .cleanup(cleanups)
+                                },
+                                onOpenDuplicateSheet: { duplicates in
+                                    viewModel.activeSheet = .duplicates(duplicates)
+                                },
+                                onTrashFile: { item in
+                                    viewModel.trashSingleFile(item)
+                                },
+                                onNavigate: onNavigate,
+                                onTriggerPrompt: { prompt in
+                                    viewModel.sendQuery(prompt)
+                                }
+                            )
+                        }
+
+                        if viewModel.isProcessing {
+                            HStack(spacing: 10) {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Text("Analyzing filesystem and running neural intent dispatch...")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 20)
+                            .id("loadingIndicator")
+                        }
+                    }
+                    .padding(20)
+                }
+                .onChange(of: viewModel.messages.count) {
+                    if let last = viewModel.messages.last {
+                        withAnimation {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Suggested Action Chips
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    SuggestionChip(icon: "folder.badge.gearshape", text: "Organize my Downloads folder") {
+                        viewModel.sendQuery("Organize my Downloads folder")
+                    }
+                    SuggestionChip(icon: "folder.fill.badge.plus", text: "Consolidate duplicate folders") {
+                        viewModel.sendQuery("consolidate duplicate folders in Downloads")
+                    }
+                    SuggestionChip(icon: "trash", text: "Find unnecessary files taking up space") {
+                        viewModel.sendQuery("Find unnecessary files taking up space")
+                    }
+                    SuggestionChip(icon: "chart.bar.xaxis", text: "Show largest files on my Mac") {
+                        viewModel.sendQuery("Show me the largest files on my Mac")
+                    }
+                    SuggestionChip(icon: "doc.on.doc", text: "Find duplicate files") {
+                        viewModel.sendQuery("Find duplicate files")
+                    }
+                    SuggestionChip(icon: "shield.checkered", text: "Full system audit") {
+                        viewModel.sendQuery("full")
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+
+            // Input Bar
+            HStack(spacing: 12) {
+                TextField("Ask MacGuard to organize, clean, or inspect...", text: $viewModel.currentInput)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .padding(10)
+                    .background(Color.secondary.opacity(0.08))
+                    .cornerRadius(8)
+                    .onSubmit {
+                        viewModel.submitInput()
+                    }
+
+                Button {
+                    viewModel.submitInput()
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(viewModel.currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .blue)
+                }
+                .buttonStyle(.plain)
+                .disabled(viewModel.currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isProcessing)
+            }
+            .padding(14)
+            .background(Color.secondary.opacity(0.04))
+        }
+        .sheet(item: $viewModel.activeSheet) { sheet in
+            switch sheet {
+            case .organization(let proposals, let folderMerges):
+                OrganizationApprovalSheet(
+                    proposals: proposals,
+                    folderMerges: folderMerges,
+                    onApprove: { approvedProposals, approvedMerges in
+                        do {
+                            if !approvedMerges.isEmpty {
+                                try FileOrganizer.shared.executeFolderMerges(approvedMerges)
+                            }
+                            if !approvedProposals.isEmpty {
+                                try FileOrganizer.shared.executeProposals(approvedProposals)
+                            }
+                            var parts: [String] = []
+                            if !approvedMerges.isEmpty {
+                                parts.append("consolidated \(approvedMerges.count) redundant folders")
+                            }
+                            if !approvedProposals.isEmpty {
+                                parts.append("organized \(approvedProposals.count) files")
+                            }
+                            let text = parts.joined(separator: " and ")
+                            viewModel.messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Successfully \(text) into a clean, unified structure. All changes recorded in the Rollback Ledger."
+                            ))
+                        } catch {
+                            viewModel.messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Encountered an issue during organization: \(error.localizedDescription)"
+                            ))
+                        }
+                        viewModel.activeSheet = nil
+                    },
+                    onCancel: {
+                        viewModel.activeSheet = nil
+                    }
+                )
+
+            case .cleanup(let targets):
+                CleanupApprovalSheet(
+                    targets: targets,
+                    onApprove: { approvedTargets in
+                        do {
+                            let totalSize = approvedTargets.reduce(0) { $0 + $1.size }
+                            let formatted = ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
+                            try CleanupEngine.shared.executeCleanup(targets: approvedTargets)
+                            viewModel.messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Safely moved \(approvedTargets.count) items (\(formatted)) to macOS Trash. You can undo this anytime from Approvals & History."
+                            ))
+                        } catch {
+                            viewModel.messages.append(ChatMessage(
+                                isUser: false,
+                                text: "Cleanup error: \(error.localizedDescription)"
+                            ))
+                        }
+                        viewModel.activeSheet = nil
+                    },
+                    onCancel: {
+                        viewModel.activeSheet = nil
+                    }
+                )
+
+            case .duplicates(let duplicates):
+                DuplicateApprovalSheet(
+                    duplicates: duplicates,
+                    onApprove: { removedCount, freedBytes in
+                        let formatted = ByteCountFormatter.string(fromByteCount: freedBytes, countStyle: .file)
+                        viewModel.messages.append(ChatMessage(
+                            isUser: false,
+                            text: "Safely relocated \(removedCount) duplicate copies (\(formatted)) to macOS Trash. Originals were preserved intact."
+                        ))
+                        viewModel.activeSheet = nil
+                    },
+                    onCancel: {
+                        viewModel.activeSheet = nil
+                    }
+                )
             }
         }
     }
@@ -455,6 +477,77 @@ struct ChatBubbleView: View {
     }
 }
 
+// MARK: - Interactive Category Chip Button (Feature F15)
+
+public struct StorageCategoryChip: View {
+    public let category: FileCategory
+    public let byteCount: Int64
+    public let onDrillDown: (FileCategory) -> Void
+
+    @State private var isHovered: Bool = false
+
+    public init(
+        category: FileCategory,
+        byteCount: Int64,
+        onDrillDown: @escaping (FileCategory) -> Void
+    ) {
+        self.category = category
+        self.byteCount = byteCount
+        self.onDrillDown = onDrillDown
+    }
+
+    private var formattedSize: String {
+        ByteCountFormatter.string(fromByteCount: byteCount, countStyle: .file)
+    }
+
+    public var body: some View {
+        Button {
+            onDrillDown(category)
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: category.systemIcon)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(category.color)
+
+                Text(category.rawValue.components(separatedBy: " & ").first ?? category.rawValue)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.primary)
+
+                Text(formattedSize)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(category.color.opacity(isHovered ? 1.0 : 0.5))
+                    .offset(x: isHovered ? 1 : 0)
+            }
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(category.color.opacity(isHovered ? 0.20 : 0.08))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(category.color.opacity(isHovered ? 0.50 : 0.15), lineWidth: 1)
+            )
+            .scaleEffect(isHovered ? 1.03 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
+        }
+        .buttonStyle(.plain)
+        .help("Inspect \(category.rawValue) files in Storage Analyzer")
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+    }
+}
+
 // MARK: - Storage Action Card (Large Files & Capacity)
 struct StorageActionCard: View {
     let overview: StorageOverview
@@ -489,27 +582,22 @@ struct StorageActionCard: View {
                     .tint(overview.usagePercentage > 0.85 ? .red : (overview.usagePercentage > 0.70 ? .orange : .blue))
             }
 
-            // Category Distribution Pills
+            // Category Distribution Pills (Interactive)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(FileCategory.allCases, id: \.self) { cat in
                         let bytes = overview.categoryBreakdown[cat] ?? 0
                         if bytes > 0 {
-                            HStack(spacing: 4) {
-                                Image(systemName: cat.systemIcon)
-                                    .font(.system(size: 10))
-                                Text(cat.rawValue.components(separatedBy: " & ").first ?? cat.rawValue)
-                                    .font(.system(size: 10, weight: .medium))
-                                Text(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))
-                                    .font(.system(size: 10, weight: .bold))
+                            StorageCategoryChip(category: cat, byteCount: bytes) { selectedCat in
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                                    NavigationCoordinator.shared.navigateToStorage(category: selectedCat)
+                                    onNavigate?(.storage)
+                                }
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.secondary.opacity(0.08))
-                            .cornerRadius(6)
                         }
                     }
                 }
+                .padding(.vertical, 2)
             }
 
             Divider()
@@ -1464,13 +1552,16 @@ struct DuplicateApprovalSheet: View {
                 Button("Clean \(count) Duplicates to Trash (\(formatted))") {
                     let freed = totalFreedBytes
                     var removed = 0
+                    let security = SecurityGuard.shared
+                    let ledger = RollbackLedger.shared
                     for group in duplicates {
                         for file in group.files where selectedCopyPaths.contains(file.path) {
                             do {
-                                try FileManager.default.trashItem(at: file.url, resultingItemURL: nil)
-                                RollbackLedger.shared.recordOperation(OperationRecord(
+                                let trashedURL = try security.safelyMoveToTrash(at: file.url, reason: "Duplicate file removal by AI Assistant")
+                                ledger.recordOperation(OperationRecord(
                                     actionType: .moveToTrash,
                                     sourcePath: file.path,
+                                    destinationPath: trashedURL.path,
                                     fileSize: file.size,
                                     reason: "Duplicate file removed by AI Assistant"
                                 ))
